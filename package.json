@@ -1,0 +1,67 @@
+{
+  "name": "crm",
+  "version": "1.0.0",
+  "description": "客户资料管理系统",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "electron": "set NODE_ENV=development&& set ELECTRON_DEV=1&& electron  .",
+    "build": "set NODE_ENV=production&& electron-builder",
+    "pack": "electron-builder --dir"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "bcrypt": "^5.1.1",
+    "connect-sqlite3": "^0.9.15",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.0.0",
+    "exceljs": "^4.4.0",
+    "express": "^4.18.2",
+    "express-session": "^1.18.1",
+    "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^2.7.0",
+    "sqlite3": "^5.1.6",
+    "uuid": "^11.1.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "electron": "^22.3.27",
+    "electron-builder": "^24.13.3",
+    "electron-rebuild": "^3.2.9",
+    "nodemon": "^3.0.1"
+  },
+  "build": {
+    "appId": "com.crm.app",
+    "productName": "CRM系统",
+    "asar": true,
+    "asarUnpack": [
+      "models/db.js"
+    ],
+    "extraResources": [
+      {
+        "from": "databaseFolder",
+        "to": "databaseFolder"
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "public/favicon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

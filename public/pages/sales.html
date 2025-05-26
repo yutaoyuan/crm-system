@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客户资料管理系统 - 销售管理</title>
+  <link rel="stylesheet" href="/lib/antd.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="/lib/antd.min.js"></script>
+</head>
+<body>
+  <!-- 页面头部 -->
+  <div class="ant-layout-header">
+    <div class="ant-pro-global-header">
+      <div class="ant-pro-global-header-content">
+        <div class="ant-pro-global-header-logo">客户资料管理系统</div>
+        <div class="ant-pro-global-header-right">
+          <span class="ant-pro-global-header-index-right" id="current-user">用户名</span>
+          <button id="logout-button" class="ant-btn ant-btn-danger">退出登录</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="ant-pro-basicLayout-content">
+    <div class="ant-pro-basicLayout-children-content-wrap">
+      <!-- 左侧菜单 -->
+      <div class="ant-layout-sider">
+        <ul class="ant-menu ant-menu-root ant-menu-inline">
+          <li class="ant-menu-item">
+            <a href="/pages/customers.html" class="ant-menu-item-link">客户管理</a>
+          </li>
+          <li class="ant-menu-item ant-menu-item-selected">
+            <a href="/pages/sales.html" class="ant-menu-item-link">销售管理</a>
+          </li>
+          <li class="ant-menu-item">
+            <a href="/pages/points.html" class="ant-menu-item-link">积分管理</a>
+          </li>
+          <li class="ant-menu-item">
+            <a href="/pages/visits.html" class="ant-menu-item-link">回访管理</a>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- 主要内容 -->
+      <div class="ant-layout-content">
+        <div class="ant-pro-page-container">
+          <h2 class="ant-typography">销售管理</h2>
+          
+          <!-- 销售详情弹窗 -->
+          <div id="sale-detail-modal" class="modal">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3>销售详情</h3>
+                <span class="close">&times;</span>
+              </div>
+              <div class="modal-body">
+                <div class="detail-section">
+                  <h4>客户信息</h4>
+                  <div class="detail-row">
+                    <div class="detail-label">姓名:</div>
+                    <div class="detail-value" id="detail-name"></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">电话:</div>
+                    <div class="detail-value" id="detail-phone"></div>
+                  </div>
+                </div>
+                
+                <div class="detail-section">
+                  <h4>销售信息</h4>
+                  <div class="detail-row">
+                    <div class="detail-label">流水号:</div>
+                    <div class="detail-value" id="detail-transaction-number"></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">日期:</div>
+                    <div class="detail-value" id="detail-date"></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">销售类型:</div>
+                    <div class="detail-value" id="detail-sale-type"></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">门店:</div>
+                    <div class="detail-value" id="detail-store"></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">导购1:</div>
+                    <div class="detail-value" id="detail-salesperson1"></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">导购2:</div>
+                    <div class="detail-value" id="detail-salesperson2"></div>
+                  </div>
+                </div>
+                
+                <div class="detail-section">
+                  <h4>商品信息</h4>
+                  <div class="detail-row">
+                    <div class="detail-label">货号:</div>
+                    <div class="detail-value" id="detail-product-code"></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">尺码:</div>
+                    <div class="detail-value" id="detail-size"></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">数量:</div>
+                    <div class="detail-value" id="detail-quantity"></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">金额:</div>
+                    <div class="detail-value" id="detail-amount"></div>
+                  </div>
+                </div>
+                
+                <div class="detail-section">
+                  <h4>备注</h4>
+                  <div class="detail-row">
+                    <div class="detail-value" id="detail-notes"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="ant-btn ant-btn" id="close-detail-btn">关闭</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 新建销售记录模态框 -->
+          <div id="sale-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="modal-title">新建销售记录</h3>
+                <span class="modal-close close-modal" style="cursor: pointer;">×</span>
+              </div>
+              <div class="modal-body">
+                <form id="sale-form" onsubmit="saveSale(event); return false;">
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label for="customer_search">客户搜索 *</label>
+                      <div class="customer-select-container">
+                        <input type="text" id="customer_search" placeholder="输入客户电话搜索..." class="form-control" autocomplete="off">
+                        <div id="customer_dropdown" class="customer-dropdown"></div>
+                        <input type="hidden" id="customer_id" name="customer_id" required>
+                        <div id="customer_selected" class="customer-selected-info" style="display:none;"></div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="customer-name">客户姓名 *</label>
+                      <input type="text" id="customer-name" name="customer-name" required>
+                    </div>
+                    <div class="form-group">
+                      <label for="customer-phone">客户电话 *</label>
+                      <input type="text" id="customer-phone" name="customer-phone" required>
+                    </div>
+                    <div class="form-group">
+                      <label for="transaction-number">流水号</label>
+                      <input type="text" id="transaction-number" name="transaction-number">
+                    </div>
+                    <div class="form-group">
+                      <label for="sale-date">日期 *</label>
+                      <input type="date" id="sale-date" name="sale-date" required>
+                    </div>
+                    <div class="form-group">
+                      <label for="sale-type">销售类型</label>
+                      <select id="sale-type" name="sale-type">
+                        <option value="">请选择</option>
+                        <option value="零售">零售</option>
+                        <option value="工服">工服</option>
+                        <option value="自用">自用</option>
+                        <option value="赠送">赠送</option>
+                        <option value="其他">其他</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="store">门店</label>
+                      <select id="store" name="store">
+                        <option value="成都青羊光华店">成都青羊光华店</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="salesperson1">导购1</label>
+                      <select id="salesperson1" name="salesperson1">
+                        <option value="">请选择</option>
+                        <option value="赵春燕">赵春燕</option>
+                        <option value="余夏莲">余夏莲</option>
+                        <option value="赵秀丽">赵秀丽</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="salesperson2">导购2</label>
+                      <select id="salesperson2" name="salesperson2">
+                        <option value="">请选择</option>
+                        <option value="赵春燕">赵春燕</option>
+                        <option value="余夏莲">余夏莲</option>
+                        <option value="赵秀丽">赵秀丽</option>
+                      </select>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>商品明细</label>
+                      <div class="sales-items-table">
+                        <table id="sales-items-table">
+                          <thead>
+                            <tr>
+                              <th>货号</th>
+                              <th>尺码</th>
+                              <th>数量</th>
+                              <th>金额</th>
+                              <th>操作</th>
+                            </tr>
+                          </thead>
+                          <tbody id="sales-items-body">
+                            <!-- 商品明细行将通过 JavaScript 动态添加 -->
+                          </tbody>
+                        </table>
+                        <button type="button" id="add-sales-item" class="ant-btn ant-btn-dashed" style="margin-top: 8px;">
+                          <i class="anticon anticon-plus"></i> 添加商品
+                        </button>
+                    </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="total-amount">总金额</label>
+                      <input type="number" id="total-amount" name="total-amount" readonly>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label for="notes">备注</label>
+                      <textarea id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="ant-btn ant-btn-default close-modal">取消</button>
+                    <button type="submit" id="save-sale-btn" class="ant-btn ant-btn-primary">保存</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 工具栏 -->
+          <div class="ant-pro-table-search" style="display: flex; justify-content: space-between;">
+
+            <div class="ant-space ant-space-horizontal ant-space-align-center">
+              <button id="new-sale-btn" class="ant-btn ant-btn-primary">新建</button>
+            </div>
+            <div class="ant-pro-table-search-query-filter">
+              <div class="ant-input-group">
+                <input type="text" id="search-input" placeholder="输入电话或姓名..." class="ant-input">
+                <button id="search-btn" class="ant-btn ant-btn-primary ant-input-search-button">搜索</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 销售记录列表 -->
+          <div class="ant-table">
+            <div id="loading-spinner" class="loading-spinner" style="display: none;">
+              <div class="spinner"></div>
+              <div class="loading-text">加载中...</div>
+            </div>
+            <table id="sales-table" class="ant-table-content">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>姓名</th>
+                  <th>电话</th>
+                  <th>流水</th>
+                  <th>日期</th>
+                  <th>销售类型</th>
+                  <th>门店</th>
+                  <th>导购1</th>
+                  <th>导购2</th>
+                  <th>数量</th>
+                  <th>总金额/元</th>
+                  <th>单据备注</th>
+                </tr>
+              </thead>
+              <tbody id="sales-list">
+                <!-- 销售记录将通过JavaScript动态加载 -->
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- 分页控件 -->
+          <div id="pagination" class="pagination">
+            <!-- 分页内容将通过JavaScript动态加载 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="../js/common.js"></script>
+  <script src="../js/sales.js"></script>
+  <style>
+  .loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 1000;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #1890ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .loading-text {
+    margin-top: 10px;
+    color: #666;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .ant-table {
+    position: relative;
+    min-height: 200px;
+  }
+  </style>
+</body>
+</html>

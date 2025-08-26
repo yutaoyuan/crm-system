@@ -1,6 +1,6 @@
 {
   "name": "crm",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "客户资料管理系统",
   "main": "electron/main.js",
   "scripts": {
@@ -85,7 +85,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "public/favicon.ico"
@@ -94,7 +96,10 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "icon": "public/favicon.ico",
@@ -104,11 +109,15 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "deb",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "public/favicon.ico",

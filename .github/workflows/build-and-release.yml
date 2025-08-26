@@ -17,7 +17,7 @@ jobs:
     
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest]
         
     steps:
       - name: Checkout code
@@ -44,13 +44,6 @@ jobs:
           npm list electron-builder
           npm list electron-updater
           npm list dmg-license
-          
-      - name: Build for Windows
-        if: matrix.os == 'windows-latest'
-        run: npx electron-builder --win
-        env:
-          NODE_ENV: production
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Build for macOS
         if: matrix.os == 'macos-latest'
@@ -94,7 +87,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            dist-windows-latest/*.exe
             dist-macos-latest/*.dmg
           body_path: release_notes.txt
           draft: false

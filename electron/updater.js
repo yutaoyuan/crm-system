@@ -41,6 +41,15 @@ class AppUpdater {
     autoUpdater.on('error', (error) => {
       winston.error('自动更新错误:', error);
       this.sendToRenderer('update-error', error.message);
+      
+      // 特殊处理常见错误
+      if (error.message.includes('status 404')) {
+        winston.warn('更新文件未找到（404错误），可能是版本发布尚未完成');
+        this.handleUpdateFileNotFound(error);
+      } else if (error.message.includes('network') || error.message.includes('timeout')) {
+        winston.warn('网络连接错误，稍后将重试');
+        this.scheduleRetryCheck();
+      }
     });
 
     // 检查更新中
@@ -85,6 +94,27 @@ class AppUpdater {
       this.sendToRenderer('update-downloaded', info);
       this.showInstallDialog(info);
     });
+  }
+
+  // 处理更新文件未找到的情况
+  handleUpdateFileNotFound(error) {
+    // 如果正在使用的版本就是最新的，则不显示错误
+    const currentVersion = require('../package.json').version;
+    winston.info(`当前版本: v${currentVersion}，更新文件未找到，可能是版本发布尚未完成`);
+    
+    // 延迟10分钟后重试
+    setTimeout(() => {
+      winston.info('重试检查更新...');
+      this.checkForUpdates();
+    }, 10 * 60 * 1000); // 10分钟
+  }
+
+  // 安排重试检查
+  scheduleRetryCheck() {
+    setTimeout(() => {
+      winston.info('网络错误后重试检查更新...');
+      this.checkForUpdates();
+    }, 5 * 60 * 1000); // 5分钟
   }
 
   // 发送消息到渲染进程
@@ -182,6 +212,25 @@ class AppUpdater {
     autoUpdater.downloadUpdate().catch(error => {
       winston.error('下载更新失败:', error);
       this.sendToRenderer('download-error', error.message);
+      
+      // 显示用户友好的错误提示
+      if (error.message.includes('status 404')) {
+        dialog.showMessageBox(this.mainWindow, {
+          type: 'warning',
+          title: '下载错误',
+          message: '更新文件暂时不可用',
+          detail: '新版本可能正在发布中，请稍后再试。系统将在后台自动重试。',
+          buttons: ['确定']
+        });
+      } else {
+        dialog.showMessageBox(this.mainWindow, {
+          type: 'error',
+          title: '下载失败',
+          message: '无法下载更新',
+          detail: `错误信息: ${error.message}`,
+          buttons: ['确定']
+        });
+      }
     });
   }
 

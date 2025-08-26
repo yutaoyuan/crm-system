@@ -1,6 +1,6 @@
 {
   "name": "crm",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "客户资料管理系统",
   "main": "electron/main.js",
   "scripts": {
@@ -56,7 +56,7 @@
   },
   "build": {
     "appId": "com.crm.app",
-    "productName": "CRM系统",
+    "productName": "crm",
     "asar": true,
     "asarUnpack": [
       "node_modules/sqlite3/**/*",

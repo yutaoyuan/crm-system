@@ -7,10 +7,37 @@ const DailyRotateFile = require('winston-daily-rotate-file');
 const path = require('path');
 const fs = require('fs');
 
+// 获取适当的日志目录
+function getLogDirectory() {
+  let logDir;
+  
+  // 在 Electron 环境中使用应用数据目录
+  if (process.versions.electron) {
+    const { app } = require('electron');
+    // 如果在主进程中，直接使用 app.getPath
+    if (app && app.getPath) {
+      logDir = path.join(app.getPath('userData'), 'logs');
+    } else {
+      // 如果在渲染进程或者 app 还未准备好，使用 resourcesPath
+      logDir = path.join(process.resourcesPath, 'databaseFolder', 'logs');
+    }
+  } else {
+    // 在普通 Node.js 环境中使用项目目录
+    logDir = path.join(process.cwd(), 'logs');
+  }
+  
+  return logDir;
+}
+
 // 确保日志目录存在
-const logDir = path.join(process.cwd(), 'logs');
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+const logDir = getLogDirectory();
+try {
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+} catch (err) {
+  // 如果无法创建日志目录，使用临时目录
+  console.warn('无法创建日志目录，将使用临时目录:', err.message);
 }
 
 // 自定义日志格式
@@ -37,6 +64,84 @@ const consoleFormat = winston.format.combine(
   })
 );
 
+// 创建传输器数组
+const transports = [
+  // 控制台输出
+  new winston.transports.Console({
+    format: consoleFormat,
+    level: 'debug'
+  })
+];
+
+// 尝试添加文件传输器
+try {
+  // 所有日志文件（按日期轮转）
+  transports.push(new DailyRotateFile({
+    filename: path.join(logDir, 'application-%DATE%.log'),
+    datePattern: 'YYYY-MM-DD',
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '30d',
+    level: 'info',
+    handleExceptions: false,
+    handleRejections: false
+  }));
+  
+  // 错误日志文件
+  transports.push(new DailyRotateFile({
+    filename: path.join(logDir, 'error-%DATE%.log'),
+    datePattern: 'YYYY-MM-DD',
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '30d',
+    level: 'error',
+    handleExceptions: false,
+    handleRejections: false
+  }));
+  
+  // 操作审计日志
+  transports.push(new DailyRotateFile({
+    filename: path.join(logDir, 'audit-%DATE%.log'),
+    datePattern: 'YYYY-MM-DD',
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '90d',
+    level: 'info',
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.json()
+    ),
+    handleExceptions: false,
+    handleRejections: false
+  }));
+} catch (err) {
+  console.warn('无法创建文件日志传输器，将仅使用控制台输出:', err.message);
+}
+
+// 异常和拒绝处理器
+let exceptionHandlers = [];
+let rejectionHandlers = [];
+
+try {
+  exceptionHandlers.push(new DailyRotateFile({
+    filename: path.join(logDir, 'exceptions-%DATE%.log'),
+    datePattern: 'YYYY-MM-DD',
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '30d'
+  }));
+  
+  rejectionHandlers.push(new DailyRotateFile({
+    filename: path.join(logDir, 'rejections-%DATE%.log'),
+    datePattern: 'YYYY-MM-DD',
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '30d'
+  }));
+} catch (err) {
+  console.warn('无法创建异常日志文件，将使用控制台输出:', err.message);
+}
+
 // 创建日志记录器
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
@@ -46,69 +151,10 @@ const logger = winston.createLogger({
     pid: process.pid,
     hostname: require('os').hostname()
   },
-  transports: [
-    // 控制台输出
-    new winston.transports.Console({
-      format: consoleFormat,
-      level: 'debug'
-    }),
-    
-    // 所有日志文件（按日期轮转）
-    new DailyRotateFile({
-      filename: path.join(logDir, 'application-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '30d',
-      level: 'info'
-    }),
-    
-    // 错误日志文件
-    new DailyRotateFile({
-      filename: path.join(logDir, 'error-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '30d',
-      level: 'error'
-    }),
-    
-    // 操作审计日志
-    new DailyRotateFile({
-      filename: path.join(logDir, 'audit-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '90d',
-      level: 'info',
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-      )
-    })
-  ],
-  
-  // 处理未捕获的异常
-  exceptionHandlers: [
-    new DailyRotateFile({
-      filename: path.join(logDir, 'exceptions-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '30d'
-    })
-  ],
-  
-  // 处理未处理的Promise拒绝
-  rejectionHandlers: [
-    new DailyRotateFile({
-      filename: path.join(logDir, 'rejections-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '30d'
-    })
-  ]
+  transports: transports,
+  exceptionHandlers: exceptionHandlers.length > 0 ? exceptionHandlers : undefined,
+  rejectionHandlers: rejectionHandlers.length > 0 ? rejectionHandlers : undefined,
+  exitOnError: false // 不要在未捕获异常时退出
 });
 
 // 扩展日志方法

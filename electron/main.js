@@ -17,7 +17,8 @@ function ensureDirectoriesExist() {
   const directories = [
     userDataPath,
     path.join(userDataPath, 'uploads'),
-    path.join(userDataPath, 'sessions')
+    path.join(userDataPath, 'sessions'),
+    path.join(userDataPath, 'logs')
   ];
 
   directories.forEach(dir => {
@@ -25,6 +26,7 @@ function ensureDirectoriesExist() {
       try {
         fs.mkdirSync(dir, { recursive: true });
       } catch (err) {
+        console.warn(`无法创建目录 ${dir}:`, err.message);
       }
     }
   });

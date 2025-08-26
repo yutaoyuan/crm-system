@@ -197,6 +197,24 @@ app.on('before-quit', (event) => {
   }
 });
 
+// 处理更新安装前的准备工作
+ipcMain.handle('prepare-for-update', async () => {
+  console.log('准备安装更新，保存应用状态...');
+  
+  // 关闭服务器
+  if (serverProcess) {
+    try {
+      serverProcess.close();
+      console.log('服务器已关闭，准备更新');
+    } catch (error) {
+      console.error('关闭服务器时出错:', error);
+    }
+    serverProcess = null;
+  }
+  
+  return true;
+});
+
 // IPC通信处理更新操作
 ipcMain.handle('check-for-updates', async () => {
   if (appUpdater) {
@@ -216,31 +234,3 @@ ipcMain.handle('install-update', () => {
     appUpdater.installUpdate();
   }
 });
-
-// 处理更新安装前的准备工作
-ipcMain.handle('prepare-for-update', async () => {
-  console.log('准备安装更新，保存应用状态...');
-  
-  // 关闭服务器
-  if (serverProcess) {
-    try {
-      serverProcess.close();
-      console.log('服务器已关闭，准备更新');
-    } catch (error) {
-      console.error('关闭服务器时出错:', error);
-    }
-    serverProcess = null;
-  }
-  
-  return true;
-});
-  if (appUpdater) {
-    appUpdater.downloadUpdate();
-  }
-});
-
-ipcMain.handle('install-update', () => {
-  if (appUpdater) {
-    appUpdater.installUpdate();
-  }
-}); 

@@ -33,19 +33,24 @@ jobs:
         run: |
           npm config set registry https://registry.npmmirror.com/
           npm install
+          npm install dmg-license --save-dev
         env:
           ELECTRON_MIRROR: https://cdn.npmmirror.com/binaries/electron/
+          
+      - name: Install app dependencies
+        run: npx electron-builder install-app-deps
           
       - name: Verify installation
         run: |
           npm list electron-builder
           npm list electron-updater
+          npm list dmg-license
           
       - name: Build for Windows
         if: matrix.os == 'windows-latest'
         run: |
           set NODE_ENV=production
-          npm run build
+          npx electron-builder --win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
@@ -53,7 +58,7 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
           export NODE_ENV=production
-          npm run build
+          npx electron-builder --mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           

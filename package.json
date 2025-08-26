@@ -9,6 +9,7 @@
     "electron": "NODE_ENV=development ELECTRON_DEV=1 electron .",
     "build": "NODE_ENV=production electron-builder",
     "pack": "electron-builder --dir",
+    "postinstall": "electron-builder install-app-deps",
     "backup-db": "node scripts/backup-db.js",
     "restore-db": "node scripts/restore-db.js"
   },
@@ -41,6 +42,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "dmg-license": "^1.0.11",
     "electron": "^22.3.27",
     "electron-builder": "^24.13.3",
     "electron-rebuild": "^3.2.9",

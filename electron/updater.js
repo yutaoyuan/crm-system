@@ -193,11 +193,6 @@ class AppUpdater {
 
   // 启动时检查更新（延迟执行）
   startPeriodicChecks() {
-    // 暂时禁用自动更新检查，等 GitHub Release 创建后再启用
-    console.log('自动更新检查已暂时禁用，等待 GitHub Release 创建');
-    
-    // TODO: 取消注释以下代码来启用自动更新
-    /*
     // 30秒后检查更新
     setTimeout(() => {
       this.checkForUpdates();
@@ -207,7 +202,6 @@ class AppUpdater {
     setInterval(() => {
       this.checkForUpdates();
     }, 4 * 60 * 60 * 1000);
-    */
   }
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "crm",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "description": "客户资料管理系统",
   "main": "electron/main.js",
   "scripts": {
@@ -115,7 +115,10 @@
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "identity": null,
-      "type": "development"
+      "type": "development",
+      "entitlements": null,
+      "entitlementsInherit": null,
+      "mergeASARs": false
     },
     "nsis": {
       "oneClick": false,

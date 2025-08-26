@@ -48,8 +48,6 @@ class AppUpdater {
   setupEvents() {
     // 检查更新出错
     autoUpdater.on('error', (error) => {
-      winston.error('自动更新错误:', error);
-      
       // 特殊处理常见错误
       if (error.message.includes('status 404')) {
         winston.warn('更新文件未找到（404错误），可能是版本发布尚未完成');
@@ -58,11 +56,12 @@ class AppUpdater {
         winston.warn('网络连接错误，稍后将重试');
         this.scheduleRetryCheck();
       } else if (error.message.includes('Could not get code signature')) {
-        winston.warn('代码签名警告（非关键错误）:', error.message);
-        // 代码签名错误不影响功能，不向用户显示
+        winston.debug('代码签名警告（非关键问题）:', error.message);
+        // 代码签名错误不影响功能，不向用户显示，也不记录为错误
         return;
       } else {
-        // 其他错误才显示给用户
+        // 其他错误才记录为错误并显示给用户
+        winston.error('自动更新错误:', error);
         this.sendToRenderer('update-error', error.message);
       }
     });

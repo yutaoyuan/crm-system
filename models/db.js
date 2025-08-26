@@ -562,28 +562,130 @@ function createDefaultUser(db) {
   });
 }
 
-// 初始化数据库（增强版）
+// 验证数据库表结构（不会覆盖现有数据）
+function verifyDatabaseTables(db) {
+  return new Promise((resolve, reject) => {
+    const requiredTables = [
+      'users', 'customers', 'sales', 'sales_item', 'points', 'customer_visits'
+    ];
+    
+    console.log('开始验证数据库表结构...');
+    
+    // 检查每个必需的表是否存在
+    const checkTable = (tableName) => {
+      return new Promise((tableResolve, tableReject) => {
+        db.get(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+          [tableName],
+          (err, row) => {
+            if (err) {
+              console.error(`检查表 ${tableName} 时出错:`, err);
+              tableReject(err);
+              return;
+            }
+            
+            if (row) {
+              console.log(`✓ 表 ${tableName} 存在`);
+              tableResolve(true);
+            } else {
+              console.warn(`✗ 表 ${tableName} 不存在，但不会强制创建以保护现有数据`);
+              tableResolve(false);
+            }
+          }
+        );
+      });
+    };
+    
+    // 并行检查所有表
+    Promise.all(requiredTables.map(checkTable))
+      .then(results => {
+        const existingTables = requiredTables.filter((_, index) => results[index]);
+        const missingTables = requiredTables.filter((_, index) => !results[index]);
+        
+        console.log(`数据库表验证完成: ${existingTables.length}/${requiredTables.length} 个表存在`);
+        
+        if (existingTables.length > 0) {
+          console.log('现有表:', existingTables.join(', '));
+        }
+        
+        if (missingTables.length > 0) {
+          console.log('缺失表:', missingTables.join(', '));
+          console.log('注意：为保护现有数据，不会自动创建缺失的表');
+        }
+        
+        // 即使有缺失的表也不报错，以保护现有数据
+        resolve({
+          existingTables,
+          missingTables,
+          hasAllTables: missingTables.length === 0
+        });
+      })
+      .catch(error => {
+        console.error('验证数据库表结构时发生错误:', error);
+        reject(error);
+      });
+  });
+}
+
+// 初始化数据库（安全版本 - 避免数据丢失）
 async function init() {
   try {
-    console.log('开始初始化数据库...');
+    console.log('\n=== 开始安全初始化数据库 ===');
+    console.log('数据库文件路径:', dbFile);
     
+    // 检查数据库文件是否已存在
+    const dbExists = fs.existsSync(dbFile);
+    console.log(`数据库文件状态: ${dbExists ? '✓ 已存在' : '✗ 不存在'}`);
+    
+    // 获取数据库连接
     const db = await getDatabase();
+    console.log('✓ 数据库连接建立成功');
     
-    console.log('创建数据库表...');
-    await createTables(db);
+    if (!dbExists) {
+      console.log('\n--- 创建新数据库 ---');
+      console.log('检测到数据库文件不存在，开始创建新的数据库表和默认数据...');
+      
+      console.log('正在创建数据库表...');
+      await createTables(db);
+      console.log('✓ 数据库表创建完成');
+      
+      console.log('正在创建默认用户...');
+      await createDefaultUser(db);
+      console.log('✓ 默认用户创建完成');
+      
+      console.log('\n✓ 新数据库初始化完成\n');
+    } else {
+      console.log('\n--- 验证现有数据库 ---');
+      console.log('检测到数据库文件已存在，进行安全验证...');
+      
+      // 只验证表是否存在，不强制重建
+      try {
+        const verifyResult = await verifyDatabaseTables(db);
+        
+        if (verifyResult.hasAllTables) {
+          console.log('✓ 数据库表结构验证通过，所有必需的表都存在');
+        } else {
+          console.log(`⚠️  数据库表结构不完整，缺失 ${verifyResult.missingTables.length} 个表`);
+          console.log('为保护现有数据，不会自动创建缺失的表');
+          console.log('如果需要创建缺失的表，请手动操作或备份数据后重新创建数据库');
+        }
+      } catch (verifyError) {
+        console.warn('⚠️  数据库表结构验证失败，但继续使用现有数据库:', verifyError.message);
+      }
+      
+      console.log('\n✓ 现有数据库连接完成，所有数据安全保留\n');
+    }
     
-    console.log('创建默认用户...');
-    await createDefaultUser(db);
-    
-    console.log('数据库初始化完成');
+    console.log('=== 数据库初始化完成 ===\n');
     return db;
+    
   } catch (error) {
-    console.error('数据库初始化失败:', error);
+    console.error('\n✗ 数据库初始化失败:', error);
     
     // 如果初始化失败，尝试清理状态
     dbManager.forceReset();
     
-    throw error;
+    throw new Error(`数据库初始化失败: ${error.message}`);
   }
 }
 

@@ -6,6 +6,7 @@ class AppUpdater {
   constructor(mainWindow) {
     this.mainWindow = mainWindow;
     this.isUpdateAvailable = false;
+    this.isInstalling = false; // 添加安装状态跟踪
     this.setupUpdater();
   }
 
@@ -249,9 +250,53 @@ class AppUpdater {
   }
 
   // 安装更新
-  installUpdate() {
+  async installUpdate() {
     winston.info('开始安装更新...');
-    autoUpdater.quitAndInstall(false, true);
+    this.isInstalling = true; // 设置安装状态
+    this.sendToRenderer('update-installing');
+    
+    try {
+      // 通知渲染进程准备更新
+      this.sendToRenderer('prepare-for-update');
+      
+      // 等待用户界面响应和保存状态
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      winston.info('执行 quitAndInstall...');
+      
+      // 尝试不同的参数组合，确保应用能正确关闭
+      // 第一个参数：是否静默重启（true = 静默重启）
+      // 第二个参数：是否强制关闭（true = 强制关闭）
+      autoUpdater.quitAndInstall(true, true);
+      
+      // 如果 quitAndInstall 没有立即关闭应用，尝试手动关闭
+      setTimeout(() => {
+        winston.warn('quitAndInstall 未能立即关闭应用，尝试手动关闭...');
+        const { app } = require('electron');
+        app.quit();
+      }, 3000);
+      
+    } catch (error) {
+      winston.error('安装更新失败:', error);
+      this.isInstalling = false; // 重置安装状态
+      
+      // 如果自动安装失败，显示手动安装提示
+      const { dialog } = require('electron');
+      dialog.showMessageBox(this.mainWindow, {
+        type: 'warning',
+        title: '更新安装',
+        message: '更新已下载完成',
+        detail: '请手动关闭应用，更新将在下次启动时自动安装。或者您也可以点击“确定”后手动关闭应用。',
+        buttons: ['确定'],
+        defaultId: 0
+      }).then(() => {
+        // 用户确认后，尝试强制关闭应用
+        const { app } = require('electron');
+        setTimeout(() => {
+          app.quit();
+        }, 1000);
+      });
+    }
   }
 
   // 启动时检查更新（延迟执行）

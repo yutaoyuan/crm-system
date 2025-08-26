@@ -1,5 +1,9 @@
 name: Build and Release
 
+permissions:
+  contents: write
+  actions: read
+
 on:
   push:
     tags:
@@ -14,6 +18,7 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     
     strategy:
       matrix:
@@ -26,7 +31,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
           
       - name: Install dependencies
@@ -38,12 +43,16 @@ jobs:
           
       - name: Install app dependencies
         run: npx electron-builder install-app-deps
+        env:
+          DEBUG: electron-builder
           
       - name: Verify installation
         run: |
           npm list electron-builder
           npm list electron-updater
           npm list dmg-license
+          node --version
+          npm --version
           
       - name: Build for macOS
         if: matrix.os == 'macos-latest'

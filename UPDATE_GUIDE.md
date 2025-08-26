@@ -13,7 +13,7 @@
 
 ### 2.1 创建GitHub仓库
 
-1. 访问 https://github.com 并登录您的账号 (rakyu@vip.qq.com)
+1. 访问 https://github.com 并登录您的账号
 2. 点击右上角 "+" → "New repository"
 3. 仓库设置：
    - Repository name: `crm-system`
@@ -29,22 +29,6 @@
    - 选择 "Read and write permissions"
    - 勾选 "Allow GitHub Actions to create and approve pull requests"
 
-### 2.3 配置Secrets（代码签名证书）
-
-进入仓库设置 → "Security" → "Secrets and variables" → "Actions"，添加以下Secrets：
-
-**Windows代码签名：**
-- `WIN_CSC_LINK`: Windows代码签名证书的Base64编码
-- `WIN_CSC_KEY_PASSWORD`: Windows证书密码
-
-**macOS代码签名：**
-- `MAC_CSC_LINK`: macOS代码签名证书的Base64编码
-- `MAC_CSC_KEY_PASSWORD`: macOS证书密码
-- `APPLE_ID`: Apple开发者账号邮箱
-- `APPLE_ID_PASSWORD`: Apple应用专用密码
-- `APPLE_TEAM_ID`: Apple团队ID
-- `KEYCHAIN_PASSWORD`: Keychain密码（可以设置为任意强密码）
-
 ## 3. 本地项目配置
 
 ### 3.1 初始化Git仓库
@@ -56,7 +40,7 @@
 git init
 
 # 添加远程仓库
-git remote add origin https://github.com/rakyu-vip/crm-system.git
+git remote add origin https://github.com/yutaoyuan/crm-system.git
 
 # 创建.gitignore文件
 cat > .gitignore << 'EOF'
@@ -73,8 +57,6 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-certs/*.p12
-*.p12
 EOF
 ```
 
@@ -134,7 +116,6 @@ git push origin main --follow-tags
 
 1. **推送标签后**，GitHub Actions会自动：
    - 在Windows、macOS、Linux上构建应用
-   - 进行代码签名（需要配置证书）
    - 创建GitHub Release
    - 上传安装包
 
@@ -166,32 +147,9 @@ git push origin main --follow-tags
 - ⬇️ 下载进度
 - ✅ 操作按钮
 
-## 6. 代码签名配置（可选但推荐）
+## 6. 测试更新功能
 
-### 6.1 Windows代码签名
-
-1. **购买代码签名证书**（如Sectigo、DigiCert）
-2. **获取.p12证书文件**
-3. **转换为Base64**：
-   ```bash
-   # macOS/Linux
-   base64 -i your-cert.p12 -o cert-base64.txt
-   
-   # Windows PowerShell
-   [Convert]::ToBase64String([IO.File]::ReadAllBytes("your-cert.p12"))
-   ```
-4. **添加到GitHub Secrets**
-
-### 6.2 macOS代码签名
-
-1. **加入Apple开发者计划**（$99/年）
-2. **获取Developer ID证书**
-3. **导出为.p12文件**
-4. **配置公证**（notarization）
-
-## 7. 测试更新功能
-
-### 7.1 本地测试
+### 6.1 本地测试
 
 ```bash
 # 启动应用（生产模式）
@@ -200,7 +158,7 @@ NODE_ENV=production npm run electron
 # 检查更新功能是否正常工作
 ```
 
-### 7.2 发布测试版本
+### 6.2 发布测试版本
 
 ```bash
 # 创建测试版本
@@ -210,14 +168,13 @@ npm version prerelease --preid=beta
 git push origin main --follow-tags
 ```
 
-## 8. 故障排除
+## 7. 故障排除
 
-### 8.1 常见问题
+### 7.1 常见问题
 
 **问题1：GitHub Actions构建失败**
-- 检查Secrets配置是否正确
-- 查看构建日志找出具体错误
-- 确认代码签名证书格式正确
+- 检查构建日志找出具体错误
+- 确认GitHub Actions权限设置正确
 
 **问题2：客户端无法检查更新**
 - 检查网络连接
@@ -229,7 +186,7 @@ git push origin main --follow-tags
 - 确认安装包文件完整
 - 检查客户端网络权限
 
-### 8.2 调试模式
+### 7.2 调试模式
 
 在开发环境中启用更新调试：
 
@@ -241,22 +198,22 @@ if (process.env.ELECTRON_DEV) {
 }
 ```
 
-## 9. 版本管理策略
+## 8. 版本管理策略
 
-### 9.1 版本号规范
+### 8.1 版本号规范
 
 采用语义化版本控制（Semantic Versioning）：
 - **主版本号**：不兼容的API修改
 - **次版本号**：向下兼容的功能性新增
 - **修订号**：向下兼容的问题修正
 
-### 9.2 发布渠道
+### 8.2 发布渠道
 
 - **stable**（正式版）：`v1.0.0`
 - **beta**（测试版）：`v1.0.0-beta.1`
 - **alpha**（内测版）：`v1.0.0-alpha.1`
 
-## 10. 后续优化建议
+## 9. 后续优化建议
 
 1. **添加更新日志**：创建CHANGELOG.md文件
 2. **增量更新**：减少下载大小
@@ -275,7 +232,6 @@ if (process.env.ELECTRON_DEV) {
 - [ ] 创建第一个版本标签
 - [ ] 验证自动构建功能
 - [ ] 测试客户端更新功能
-- [ ] 配置代码签名（可选）
 
 完成以上步骤后，您的CRM系统就具备了完整的自动更新功能！
 
@@ -287,3 +243,15162 @@ if (process.env.ELECTRON_DEV) {
 3. 验证网络连接和权限设置
 
 祝您使用愉快！🎉
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-uparter --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p12
+*.p12
+EOF
+```
+
+```
+# 安装electron-updater
+npm install electron-updater --save-dev
+
+# 验证安装
+npm list electron-updater
+```
+
+```
+# 添加所有文件
+git add .
+
+# 创建首次提交
+git commit -m "Initial commit: CRM系统基础代码"
+
+# 推送到GitHub
+git push -u origin main
+```
+
+```
+# 补丁版本（bug修复）
+npm version patch
+   
+# 次要版本（新功能）
+npm version minor
+   
+# 主要版本（重大更新）
+npm version major
+```
+
+```
+# 推送代码和标签
+git push origin main
+git push origin --tags
+
+# 或者一条命令推送所有
+git push origin main --follow-tags
+```
+
+```
+# 初始化Git仓库
+git init
+
+# 添加远程仓库
+git remote add origin https://github.com/yutaoyuan/crm-system.git
+
+# 创建.gitignore文件
+cat > .gitignore << 'EOF'
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+certs/*.p

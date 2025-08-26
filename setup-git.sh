@@ -20,7 +20,7 @@ if git remote get-url origin > /dev/null 2>&1; then
     echo "ℹ️  远程仓库已存在: $(git remote get-url origin)"
 else
     echo "🔗 添加远程仓库..."
-    git remote add origin https://github.com/rakyu-vip/crm-system.git
+    git remote add origin https://github.com/yutaoyuan/crm-system.git
 fi
 
 # 设置默认分支为main

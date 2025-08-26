@@ -21,7 +21,7 @@ class AppUpdater {
     // 设置更新服务器（GitHub Releases）
     autoUpdater.setFeedURL({
       provider: 'github',
-      owner: 'rakyu-vip',
+      owner: 'yutaoyuan',
       repo: 'crm-system'
     });
 

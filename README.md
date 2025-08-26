@@ -29,7 +29,7 @@
 
 1. **克隆项目**
    ```bash
-   git clone https://github.com/rakyu-vip/crm-system.git
+   git clone https://github.com/yutaoyuan/crm-system.git
    cd crm-system
    ```
 
@@ -144,8 +144,8 @@ npm run restore-db # 恢复数据库
 
 ## 📞 联系方式
 
-- 项目链接：[https://github.com/rakyu-vip/crm-system](https://github.com/rakyu-vip/crm-system)
-- 问题反馈：[Issues](https://github.com/rakyu-vip/crm-system/issues)
+- 项目链接：[https://github.com/yutaoyuan/crm-system](https://github.com/yutaoyuan/crm-system)
+- 问题反馈：[Issues](https://github.com/yutaoyuan/crm-system/issues)
 
 ## 🙏 致谢
 

@@ -56,7 +56,7 @@ jobs:
           
       - name: Build for macOS
         if: matrix.os == 'macos-latest'
-        run: npx electron-builder --mac
+        run: npx electron-builder --mac --publish=never
         env:
           NODE_ENV: production
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -97,6 +97,9 @@ jobs:
         with:
           files: |
             dist-macos-latest/*.dmg
+            dist-macos-latest/*.yml
+            dist-macos-latest/*.zip
+            dist-macos-latest/*.json
           body_path: release_notes.txt
           draft: false
           prerelease: false

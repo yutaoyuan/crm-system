@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { db } = require('../models/db');
+const { db, getDatabase } = require('../models/db');
 const { authenticateToken } = require('../middleware/auth');
 
 // 内存缓存

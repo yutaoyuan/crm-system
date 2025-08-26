@@ -1,6 +1,6 @@
 const { autoUpdater } = require('electron-updater');
 const { dialog, BrowserWindow } = require('electron');
-const { logger } = require('../utils/logger');
+const { winston } = require('../utils/logger'); // 使用原始的 winston logger
 
 class AppUpdater {
   constructor(mainWindow) {
@@ -11,8 +11,16 @@ class AppUpdater {
 
   setupUpdater() {
     // 配置日志
-    autoUpdater.logger = logger;
-    autoUpdater.logger.transports.file.level = 'info';
+    autoUpdater.logger = winston;
+    
+    // 安全设置日志级别
+    try {
+      if (autoUpdater.logger && autoUpdater.logger.transports && autoUpdater.logger.transports.file) {
+        autoUpdater.logger.transports.file.level = 'info';
+      }
+    } catch (error) {
+      console.warn('无法设置自动更新日志级别:', error.message);
+    }
 
     // 配置更新行为
     autoUpdater.autoDownload = false; // 不自动下载，让用户确认
@@ -31,19 +39,19 @@ class AppUpdater {
   setupEvents() {
     // 检查更新出错
     autoUpdater.on('error', (error) => {
-      logger.error('自动更新错误:', error);
+      winston.error('自动更新错误:', error);
       this.sendToRenderer('update-error', error.message);
     });
 
     // 检查更新中
     autoUpdater.on('checking-for-update', () => {
-      logger.info('正在检查更新...');
+      winston.info('正在检查更新...');
       this.sendToRenderer('checking-for-update');
     });
 
     // 有可用更新
     autoUpdater.on('update-available', (info) => {
-      logger.info('发现新版本:', info.version);
+      winston.info('发现新版本:', info.version);
       this.isUpdateAvailable = true;
       this.sendToRenderer('update-available', {
         version: info.version,
@@ -55,14 +63,14 @@ class AppUpdater {
 
     // 没有可用更新
     autoUpdater.on('update-not-available', (info) => {
-      logger.info('当前已是最新版本:', info.version);
+      winston.info('当前已是最新版本:', info.version);
       this.sendToRenderer('update-not-available', info);
     });
 
     // 下载进度
     autoUpdater.on('download-progress', (progressObj) => {
       const message = `下载进度: ${Math.round(progressObj.percent)}%`;
-      logger.info(message);
+      winston.info(message);
       this.sendToRenderer('download-progress', {
         percent: Math.round(progressObj.percent),
         transferred: progressObj.transferred,
@@ -73,7 +81,7 @@ class AppUpdater {
 
     // 下载完成
     autoUpdater.on('update-downloaded', (info) => {
-      logger.info('更新下载完成:', info.version);
+      winston.info('更新下载完成:', info.version);
       this.sendToRenderer('update-downloaded', info);
       this.showInstallDialog(info);
     });
@@ -103,10 +111,10 @@ class AppUpdater {
         this.downloadUpdate();
         break;
       case 1: // 稍后提醒
-        logger.info('用户选择稍后提醒');
+        winston.info('用户选择稍后提醒');
         break;
       case 2: // 跳过此版本
-        logger.info('用户选择跳过版本:', info.version);
+        winston.info('用户选择跳过版本:', info.version);
         break;
     }
   }
@@ -126,7 +134,7 @@ class AppUpdater {
     if (result.response === 0) {
       this.installUpdate();
     } else {
-      logger.info('用户选择稍后安装');
+      winston.info('用户选择稍后安装');
     }
   }
 
@@ -134,7 +142,7 @@ class AppUpdater {
   checkForUpdates() {
     if (!this.isUpdateAvailable) {
       autoUpdater.checkForUpdates().catch(error => {
-        logger.error('检查更新失败:', error);
+        winston.error('检查更新失败:', error);
       });
     }
   }
@@ -156,7 +164,7 @@ class AppUpdater {
         }
       }, 3000);
     } catch (error) {
-      logger.error('手动检查更新失败:', error);
+      winston.error('手动检查更新失败:', error);
       dialog.showMessageBox(this.mainWindow, {
         type: 'error',
         title: '检查更新失败',
@@ -169,22 +177,27 @@ class AppUpdater {
 
   // 下载更新
   downloadUpdate() {
-    logger.info('开始下载更新...');
+    winston.info('开始下载更新...');
     this.sendToRenderer('download-started');
     autoUpdater.downloadUpdate().catch(error => {
-      logger.error('下载更新失败:', error);
+      winston.error('下载更新失败:', error);
       this.sendToRenderer('download-error', error.message);
     });
   }
 
   // 安装更新
   installUpdate() {
-    logger.info('开始安装更新...');
+    winston.info('开始安装更新...');
     autoUpdater.quitAndInstall(false, true);
   }
 
   // 启动时检查更新（延迟执行）
   startPeriodicChecks() {
+    // 暂时禁用自动更新检查，等 GitHub Release 创建后再启用
+    console.log('自动更新检查已暂时禁用，等待 GitHub Release 创建');
+    
+    // TODO: 取消注释以下代码来启用自动更新
+    /*
     // 30秒后检查更新
     setTimeout(() => {
       this.checkForUpdates();
@@ -194,6 +207,7 @@ class AppUpdater {
     setInterval(() => {
       this.checkForUpdates();
     }, 4 * 60 * 60 * 1000);
+    */
   }
 }
 

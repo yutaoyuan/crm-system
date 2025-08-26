@@ -8,7 +8,7 @@ const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
 const cors = require('cors');
 const compression = require('compression');
-const { db, init, setupTriggers } = require('./models/db');
+const { init, setupTriggers } = require('./models/db');
 const cookieParser = require('cookie-parser');
 const morganLogger = require('morgan');
 const { isAuthenticated } = require('./middleware/auth');
@@ -201,18 +201,24 @@ app.use(globalErrorHandler);
 // 初始化错误处理
 initErrorHandling();
 
-logger.info('应用启动中...', { version: '1.0.0' });
+logger.info('应用启动中...', { version: '1.0.12' });
 
 // 初始化数据库和启动服务器
+// 在 Electron 环境中，服务器由主进程控制
 init()
   .then(async () => {
-    try {
-      PORT = await findAvailablePort(PORT);
-      app.listen(PORT, () => {
-        logger.info('服务器启动成功', { port: PORT, env: process.env.NODE_ENV || 'development' });
-      });
-    } catch (err) {
-      logger.error('启动服务器失败', { error: err.message, stack: err.stack });
+    // 只在非 Electron 环境中自动启动服务器
+    if (!process.versions.electron) {
+      try {
+        PORT = await findAvailablePort(PORT);
+        app.listen(PORT, () => {
+          logger.info('服务器启动成功', { port: PORT, env: process.env.NODE_ENV || 'development' });
+        });
+      } catch (err) {
+        logger.error('启动服务器失败', { error: err.message, stack: err.stack });
+      }
+    } else {
+      logger.info('在 Electron 环境中运行，服务器由主进程控制');
     }
   })
   .catch(err => {

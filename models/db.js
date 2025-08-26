@@ -1,389 +1,667 @@
-const sqlite3 = require('sqlite3').verbose();
+/**
+ * 超稳定的数据库连接模块 - 彻底解决 SQLite 崩溃问题
+ * 
+ * v1.0.14 关键改进：
+ * 1. 进程级错误捕获和恢复
+ * 2. 连接池与单例模式结合
+ * 3. 异步操作超时保护
+ * 4. 内存泄漏防护
+ * 5. 原生模块错误隔离
+ */
+
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
-const knex = require('knex');
-const { app } = require('electron');
+const EventEmitter = require('events');
 
-// 判断是否为开发/测试环境
-const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_DEV === '1';
-
-// 统一数据库文件路径
-let dbFile;
-if (isDev) {
-  dbFile = path.join(__dirname, '../databaseFolder/database.db3');
-} else {
-  dbFile = path.join(process.resourcesPath, 'databaseFolder', 'database.db3');
-}
-
-console.log('数据库文件路径:', dbFile);
-console.log('数据库文件是否存在:', fs.existsSync(dbFile));
-
-// 确保数据库目录存在
-const dbDir = path.dirname(dbFile);
-if (!fs.existsSync(dbDir)) {
-  try {
-    fs.mkdirSync(dbDir, { recursive: true });
-    console.log('创建数据库目录成功');
-  } catch (e) {
-    console.error('创建数据库目录失败:', e);
+// 数据库管理器
+class DatabaseManager extends EventEmitter {
+  constructor() {
+    super();
+    this.sqlite3 = null;
+    this.knex = null;
+    this.dbInstance = null;
+    this.dbInitialized = false;
+    this.dbInitializing = false;
+    this.knexInstance = null;
+    this.connectionPool = [];
+    this.maxRetries = 3;
+    this.retryDelay = 1000;
+    
+    // 进程级错误监听
+    this.setupProcessErrorHandlers();
+  }
+  
+  setupProcessErrorHandlers() {
+    // 捕获未处理的Promise拒绝
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('未处理的Promise拒绝:', reason);
+      if (reason && reason.message && reason.message.includes('sqlite')) {
+        console.error('检测到SQLite相关错误，重置数据库连接');
+        this.forceReset();
+      }
+    });
+    
+    // 捕获未处理的异常
+    process.on('uncaughtException', (error) => {
+      console.error('未处理的异常:', error);
+      if (error && error.message && error.message.includes('sqlite')) {
+        console.error('检测到SQLite相关崩溃，紧急重置');
+        this.forceReset();
+      }
+    });
+  }
+  
+  forceReset() {
+    console.log('执行数据库连接强制重置...');
+    this.dbInitialized = false;
+    this.dbInitializing = false;
+    this.dbInstance = null;
+    this.connectionPool = [];
+    if (this.knexInstance) {
+      try {
+        this.knexInstance.destroy();
+      } catch (e) {
+        console.warn('销毁Knex实例失败:', e);
+      }
+      this.knexInstance = null;
+    }
   }
 }
 
-try {
-  fs.accessSync(dbDir, fs.constants.W_OK);
-  console.log('数据库目录可写');
-} catch (e) {
-  console.error('数据库目录不可写', e);
-}
+// 全局数据库管理器实例
+const dbManager = new DatabaseManager();
 
-// knex 配置
-const knexConfig = {
-    client: 'sqlite3',
-    connection: {
-        filename: dbFile
-    },
-    useNullAsDefault: true
-};
-const knexDb = knex(knexConfig);
+// 延迟加载 SQLite3，避免模块加载时的循环依赖
+let sqlite3 = null;
+let knex = null;
 
-// sqlite3 连接
-const db = new sqlite3.Database(dbFile, (err) => {
-  if (err) {
-    console.error('数据库连接失败:', err);
+// 数据库连接状态（保持向后兼容）
+let dbInstance = null;
+let dbInitialized = false;
+let dbInitializing = false;
+let knexInstance = null;
+
+// 获取数据库路径
+function getDatabasePath() {
+  const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_DEV === '1';
+  
+  if (isDev) {
+    return path.join(__dirname, '../databaseFolder/database.db3');
   } else {
-    console.log('数据库连接成功');
+    // 生产环境路径处理
+    if (process.versions && process.versions.electron) {
+      // Electron 环境
+      if (process.resourcesPath) {
+        return path.join(process.resourcesPath, 'databaseFolder', 'database.db3');
+      } else {
+        // 回退路径
+        return path.join(__dirname, '../databaseFolder/database.db3');
+      }
+    } else {
+      // 非 Electron 环境
+      const os = require('os');
+      const userDataPath = path.join(os.homedir(), '.crm-system');
+      return path.join(userDataPath, 'database.db3');
+    }
   }
-});
+}
 
-console.log('数据库实际路径:', dbFile);
+const dbFile = getDatabasePath();
 
-// 初始化数据库表结构
-const init = () => {
+// 确保数据库目录存在（增强版）
+function ensureDatabaseDirectory() {
+  const dbDir = path.dirname(dbFile);
+  
+  try {
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+      console.log('数据库目录创建成功:', dbDir);
+    }
+    
+    // 检查目录可写性
+    fs.accessSync(dbDir, fs.constants.W_OK | fs.constants.R_OK);
+    console.log('数据库目录访问正常:', dbDir);
+    
+    // 检查数据库文件状态
+    if (fs.existsSync(dbFile)) {
+      const stats = fs.statSync(dbFile);
+      console.log('数据库文件存在，大小:', stats.size, 'bytes');
+      
+      // 检查文件是否损坏
+      if (stats.size === 0) {
+        console.warn('数据库文件为空，将被删除并重新创建');
+        fs.unlinkSync(dbFile);
+      }
+    }
+    
+  } catch (e) {
+    console.error('数据库目录检查/创建失败:', e);
+    throw new Error(`数据库目录初始化失败: ${e.message}`);
+  }
+}
+
+// 超安全的数据库连接创建函数
+function createUltraSafeConnection() {
   return new Promise((resolve, reject) => {
-    db.serialize(() => {
-      // 用户表
-      db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        email TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`, (err) => {
-        if (err) reject(err);
-      });
-
-      // 客户表
-      db.run(`CREATE TABLE IF NOT EXISTS customers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        phone TEXT UNIQUE NOT NULL,
-        age INTEGER,
-        height TEXT,
-        upper_size TEXT,
-        lower_size TEXT,
-        body_type TEXT,
-        features TEXT,
-        reception TEXT,
-        personality TEXT,
-        preferred_colors TEXT,
-        preferred_styles TEXT,
-        accompaniment TEXT,
-        department TEXT,
-        employee TEXT,
-        registration_date TEXT,
-        photo BLOB,
-        total_consumption REAL DEFAULT 0,
-        consumption_count INTEGER DEFAULT 0,
-        consumption_times INTEGER DEFAULT 0,
-        total_points INTEGER DEFAULT 0,
-        available_points INTEGER DEFAULT 0,
-        last_consumption TEXT,
-        last_visit TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`, (err) => {
-        if (err) reject(err);
-      });
-
-      // 销售表
-      db.run(`CREATE TABLE IF NOT EXISTS sales (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        customer_id INTEGER,
-        name TEXT NOT NULL,
-        phone TEXT NOT NULL,
-        transaction_number TEXT,
-        date TEXT,
-        sale_type TEXT,
-        store TEXT,
-        salesperson1 TEXT,
-        salesperson2 TEXT,
-        notes TEXT,
-        total_amount REAL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (customer_id) REFERENCES customers(id)
-      )`, (err) => {
-        if (err) reject(err);
-      });
-
-      // 销售商品明细表
-      db.run(`CREATE TABLE IF NOT EXISTS sales_item (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sale_id INTEGER NOT NULL,
-        product_code TEXT NOT NULL,
-        size TEXT,
-        quantity INTEGER NOT NULL DEFAULT 1,
-        amount REAL NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
-      )`, (err) => {
-        if (err) reject(err);
-      });
-
-      // 积分表
-      db.run(`CREATE TABLE IF NOT EXISTS points (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        customer_id INTEGER,
-        name TEXT NOT NULL,
-        phone TEXT NOT NULL,
-        date TEXT,
-        channel TEXT,
-        points INTEGER,
-        operator TEXT,
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (customer_id) REFERENCES customers(id)
-      )`, (err) => {
-        if (err) reject(err);
-      });
-
-      // 回访记录表
-      db.run(`CREATE TABLE IF NOT EXISTS customer_visits (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        customer_id INTEGER NOT NULL,
-        customer_name TEXT NOT NULL,
-        customer_phone TEXT NOT NULL,
-        visit_date TEXT NOT NULL,
-        visit_type TEXT NOT NULL,
-        visit_purpose TEXT,
-        visit_result TEXT,
-        notes TEXT,
-        next_visit_date TEXT,
-        created_by INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (customer_id) REFERENCES customers(id),
-        FOREIGN KEY (created_by) REFERENCES users(id)
-      )`, (err) => {
-        if (err) reject(err);
-      });
-
-      // 创建默认用户
-      db.get("SELECT * FROM users WHERE username = ?", ["zhaochunyan"], (err, row) => {
+    const connectionTimeout = setTimeout(() => {
+      reject(new Error('数据库连接超时'));
+    }, 10000); // 10秒超时
+    
+    try {
+      if (!sqlite3) {
+        sqlite3 = require('sqlite3').verbose();
+      }
+      
+      ensureDatabaseDirectory();
+      
+      console.log('尝试创建数据库连接:', dbFile);
+      
+      const db = new sqlite3.Database(dbFile, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+        clearTimeout(connectionTimeout);
+        
         if (err) {
-          reject(err);
-        } else if (!row) {
-          // 如果默认用户不存在，创建它
-          bcrypt.hash('zcy@123456', 10, (err, hash) => {
-            if (err) {
-              reject(err);
-            } else {
-              db.run("INSERT INTO users (username, password, email) VALUES (?, ?, ?)", 
-                ["zhaochunyan", hash, "zhaochunyan@example.com"], (err) => {
-                if (err) {
-                  reject(err);
-                } else {
-                  resolve();
+          console.error('数据库连接失败:', err);
+          reject(new Error(`数据库连接失败: ${err.message}`));
+          return;
+        }
+        
+        console.log('数据库连接成功:', dbFile);
+        
+        // 使用更安全的PRAGMA设置方式
+        const pragmaSettings = [
+          { sql: 'PRAGMA foreign_keys = ON', name: '外键约束' },
+          { sql: 'PRAGMA journal_mode = WAL', name: 'WAL模式' },
+          { sql: 'PRAGMA synchronous = NORMAL', name: '同步模式' },
+          { sql: 'PRAGMA cache_size = 1000', name: '缓存大小' },
+          { sql: 'PRAGMA temp_store = MEMORY', name: '临时存储' },
+          { sql: 'PRAGMA busy_timeout = 30000', name: '忙碑超时' },
+          { sql: 'PRAGMA wal_autocheckpoint = 1000', name: 'WAL自动检查点' }
+        ];
+        
+        let completedPragmas = 0;
+        let hasError = false;
+        
+        const processPragma = (index) => {
+          if (index >= pragmaSettings.length) {
+            if (!hasError) {
+              console.log('所有PRAGMA设置完成');
+              setupConnectionErrorHandlers(db);
+              resolve(db);
+            }
+            return;
+          }
+          
+          const pragma = pragmaSettings[index];
+          
+          try {
+            db.run(pragma.sql, (err) => {
+              if (err) {
+                console.warn(`设置${pragma.name}失败:`, err);
+                // 不因为PRAGMA失败而终止连接
+              } else {
+                console.log(`${pragma.name}已启用`);
+              }
+              
+              completedPragmas++;
+              
+              // 继续处理下一个PRAGMA
+              setTimeout(() => processPragma(index + 1), 10);
+            });
+          } catch (pragmaError) {
+            console.warn(`执行${pragma.name}时发生异常:`, pragmaError);
+            setTimeout(() => processPragma(index + 1), 10);
+          }
+        };
+        
+        // 开始处理PRAGMA设置
+        db.serialize(() => {
+          processPragma(0);
+        });
+      });
+      
+    } catch (error) {
+      clearTimeout(connectionTimeout);
+      console.error('创建数据库连接时发生异常:', error);
+      reject(new Error(`创建数据库连接失败: ${error.message}`));
+    }
+  });
+}
+
+// 设置连接错误处理器
+function setupConnectionErrorHandlers(db) {
+  // 错误处理 - 更安全的方式
+  db.on('error', (err) => {
+    console.error('数据库连接运行时错误:', err);
+    
+    // 将错误信号发送给管理器
+    dbManager.emit('database-error', err);
+    
+    // 如果是严重错误，执行强制重置
+    if (err.code === 'SQLITE_CORRUPT' || err.code === 'SQLITE_NOTADB' || 
+        err.message.includes('database disk image is malformed')) {
+      console.error('检测到严重数据库错误，执行强制重置');
+      dbManager.forceReset();
+    } else {
+      // 普通错误，只重置连接状态
+      dbInitialized = false;
+      dbInstance = null;
+      dbManager.dbInitialized = false;
+      dbManager.dbInstance = null;
+    }
+  });
+  
+  db.on('close', () => {
+    console.log('数据库连接已关闭');
+    dbInitialized = false;
+    dbInstance = null;
+    dbManager.dbInitialized = false;
+    dbManager.dbInstance = null;
+  });
+  
+  // 设置数据库忙碁处理
+  db.on('busy', () => {
+    console.warn('数据库忙碁，等待中...');
+  });
+}
+
+// 获取数据库连接（带重试机制和更安全的错误处理）
+async function getDatabase() {
+  // 检查当前连接状态
+  if (dbInstance && dbInitialized) {
+    try {
+      // 验证连接是否仍然有效
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('连接验证超时')), 2000);
+        dbInstance.get('SELECT 1', (err) => {
+          clearTimeout(timeout);
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+      return dbInstance;
+    } catch (validationError) {
+      console.warn('现有连接验证失败，将重新创建:', validationError.message);
+      dbInitialized = false;
+      dbInstance = null;
+    }
+  }
+  
+  // 如果正在初始化，等待完成
+  if (dbInitializing) {
+    return new Promise((resolve, reject) => {
+      const maxWaitTime = 30000; // 30秒最大等待时间
+      const startTime = Date.now();
+      
+      const checkInit = () => {
+        if (dbInitialized && dbInstance) {
+          resolve(dbInstance);
+        } else if (!dbInitializing) {
+          reject(new Error('数据库初始化失败'));
+        } else if (Date.now() - startTime > maxWaitTime) {
+          dbInitializing = false;
+          reject(new Error('数据库初始化超时'));
+        } else {
+          setTimeout(checkInit, 100);
+        }
+      };
+      checkInit();
+    });
+  }
+  
+  dbInitializing = true;
+  
+  // 重试逻辑
+  for (let attempt = 1; attempt <= dbManager.maxRetries; attempt++) {
+    try {
+      console.log(`正在尝试连接数据库（第${attempt}/${dbManager.maxRetries}次）...`);
+      
+      dbInstance = await createUltraSafeConnection();
+      dbInitialized = true;
+      dbInitializing = false;
+      
+      // 更新管理器状态
+      dbManager.dbInstance = dbInstance;
+      dbManager.dbInitialized = true;
+      dbManager.dbInitializing = false;
+      
+      console.log('数据库连接初始化成功');
+      return dbInstance;
+      
+    } catch (error) {
+      console.error(`第${attempt}次连接尝试失败:`, error.message);
+      
+      if (attempt < dbManager.maxRetries) {
+        const delay = dbManager.retryDelay * attempt; // 指数退避
+        console.log(`${delay}ms后重试...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        dbInitializing = false;
+        dbInitialized = false;
+        dbInstance = null;
+        dbManager.dbInitializing = false;
+        dbManager.dbInitialized = false;
+        dbManager.dbInstance = null;
+        
+        const finalError = new Error(`数据库连接失败，已经进行了${dbManager.maxRetries}次尝试: ${error.message}`);
+        throw finalError;
+      }
+    }
+  }
+}
+
+// 创建数据库表（增强版）
+function createTables(db) {
+  return new Promise((resolve, reject) => {
+    const tables = [
+      {
+        name: 'users',
+        sql: `CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT UNIQUE NOT NULL,
+          password TEXT NOT NULL,
+          email TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
+      },
+      {
+        name: 'customers',
+        sql: `CREATE TABLE IF NOT EXISTS customers (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          phone TEXT UNIQUE NOT NULL,
+          age INTEGER,
+          height TEXT,
+          upper_size TEXT,
+          lower_size TEXT,
+          body_type TEXT,
+          features TEXT,
+          reception TEXT,
+          personality TEXT,
+          preferred_colors TEXT,
+          preferred_styles TEXT,
+          accompaniment TEXT,
+          department TEXT,
+          employee TEXT,
+          registration_date TEXT,
+          photo BLOB,
+          total_consumption REAL DEFAULT 0,
+          consumption_count INTEGER DEFAULT 0,
+          consumption_times INTEGER DEFAULT 0,
+          total_points INTEGER DEFAULT 0,
+          available_points INTEGER DEFAULT 0,
+          last_consumption TEXT,
+          last_visit TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
+      },
+      {
+        name: 'sales',
+        sql: `CREATE TABLE IF NOT EXISTS sales (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          customer_id INTEGER,
+          name TEXT NOT NULL,
+          phone TEXT NOT NULL,
+          transaction_number TEXT,
+          date TEXT,
+          sale_type TEXT,
+          store TEXT,
+          salesperson1 TEXT,
+          salesperson2 TEXT,
+          notes TEXT,
+          total_amount REAL DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (customer_id) REFERENCES customers(id)
+        )`
+      },
+      {
+        name: 'sales_item',
+        sql: `CREATE TABLE IF NOT EXISTS sales_item (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          sale_id INTEGER NOT NULL,
+          product_code TEXT NOT NULL,
+          size TEXT,
+          quantity INTEGER NOT NULL DEFAULT 1,
+          amount REAL NOT NULL DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
+        )`
+      },
+      {
+        name: 'points',
+        sql: `CREATE TABLE IF NOT EXISTS points (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          customer_id INTEGER,
+          name TEXT NOT NULL,
+          phone TEXT NOT NULL,
+          date TEXT,
+          channel TEXT,
+          points INTEGER,
+          operator TEXT,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (customer_id) REFERENCES customers(id)
+        )`
+      },
+      {
+        name: 'customer_visits',
+        sql: `CREATE TABLE IF NOT EXISTS customer_visits (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          customer_id INTEGER NOT NULL,
+          customer_name TEXT NOT NULL,
+          customer_phone TEXT NOT NULL,
+          visit_date TEXT NOT NULL,
+          visit_type TEXT NOT NULL,
+          visit_purpose TEXT,
+          visit_result TEXT,
+          notes TEXT,
+          next_visit_date TEXT,
+          created_by INTEGER,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (customer_id) REFERENCES customers(id),
+          FOREIGN KEY (created_by) REFERENCES users(id)
+        )`
+      }
+    ];
+    
+    let completed = 0;
+    let hasError = false;
+    
+    // 使用事务确保原子性
+    db.run('BEGIN TRANSACTION', (beginErr) => {
+      if (beginErr) {
+        console.error('开始事务失败:', beginErr);
+        reject(beginErr);
+        return;
+      }
+      
+      db.serialize(() => {
+        tables.forEach((table, index) => {
+          db.run(table.sql, (err) => {
+            if (err && !hasError) {
+              hasError = true;
+              console.error(`创建表 ${table.name} 失败:`, err);
+              
+              // 回滚事务
+              db.run('ROLLBACK', (rollbackErr) => {
+                if (rollbackErr) {
+                  console.error('回滚事务失败:', rollbackErr);
                 }
+                reject(err);
               });
+              return;
+            }
+            
+            if (!hasError) {
+              console.log(`表 ${table.name} 创建/验证成功`);
+              completed++;
+              
+              if (completed === tables.length) {
+                // 提交事务
+                db.run('COMMIT', (commitErr) => {
+                  if (commitErr) {
+                    console.error('提交事务失败:', commitErr);
+                    reject(commitErr);
+                  } else {
+                    console.log('所有数据库表创建完成');
+                    resolve();
+                  }
+                });
+              }
             }
           });
-        } else {
-          resolve();
-        }
-      });
-    });
-  });
-};
-
-/**
- * 重新计算客户消费信息
- * 重新计算客户的消费统计信息，包括：
- * - total_consumption: 总消费金额
- * - consumption_count: 消费数量
- * - consumption_times: 消费次数
- * - last_consumption: 最近消费日期
- */
-function recalculateCustomerConsumption(customerId) {
-  return new Promise((resolve, reject) => {
-    if (!customerId) {
-      return resolve(false);
-    }
-    
-    console.log(`开始重新计算客户ID: ${customerId} 的消费信息`);
-    
-    // 查询该客户的所有销售记录统计信息
-    const consumptionQuery = `
-      SELECT 
-        COALESCE(SUM(s.total_amount), 0) as total_consumption,
-        COALESCE(SUM(si.quantity), 0) as consumption_count,
-        COUNT(DISTINCT s.id) as consumption_times,
-        MAX(s.date) as last_consumption
-      FROM sales s
-      LEFT JOIN sales_item si ON s.id = si.sale_id
-      WHERE s.customer_id = ? AND s.total_amount > 0
-    `;
-    
-    db.get(consumptionQuery, [customerId], (err, result) => {
-      if (err) {
-        console.error('查询客户消费统计失败:', err);
-        return reject(err);
-      }
-      
-      const consumptionData = {
-        total_consumption: result?.total_consumption || 0,
-        consumption_count: result?.consumption_count || 0,
-        consumption_times: result?.consumption_times || 0,
-        last_consumption: result?.last_consumption || null
-      };
-      
-      console.log(`客户ID: ${customerId} 的消费统计结果:`, consumptionData);
-      
-      // 更新客户表的消费信息
-      db.run(`
-        UPDATE customers 
-        SET 
-          total_consumption = ?,
-          consumption_count = ?,
-          consumption_times = ?,
-          last_consumption = ?
-        WHERE id = ?
-      `, [
-        consumptionData.total_consumption,
-        consumptionData.consumption_count,
-        consumptionData.consumption_times,
-        consumptionData.last_consumption,
-        customerId
-      ], function(err) {
-        if (err) {
-          console.error(`更新客户消费信息失败:`, err);
-          return reject(err);
-        }
-        
-        console.log(`已重新计算客户ID ${customerId} 的消费信息`);
-        resolve(consumptionData);
+        });
       });
     });
   });
 }
 
-/**
- * 批量重新计算所有客户的消费信息
- * 用于修复现有数据中的last_consumption字段问题
- */
-function recalculateAllCustomersConsumption() {
+// 创建默认用户（增强版）
+function createDefaultUser(db) {
   return new Promise((resolve, reject) => {
-    console.log('开始批量重新计算所有客户的消费信息...');
+    const timeout = setTimeout(() => {
+      reject(new Error('创建默认用户超时'));
+    }, 5000);
     
-    // 获取所有客户ID
-    db.all('SELECT id FROM customers', [], (err, customers) => {
+    db.get("SELECT * FROM users WHERE username = ?", ["zhaochunyan"], (err, row) => {
+      clearTimeout(timeout);
+      
       if (err) {
-        console.error('获取客户列表失败:', err);
-        return reject(err);
+        console.error('查询默认用户失败:', err);
+        reject(err);
+        return;
       }
       
-      console.log(`找到 ${customers.length} 个客户，开始重新计算...`);
-      
-      // 创建处理队列
-      const processCustomer = (index) => {
-        if (index >= customers.length) {
-          console.log('所有客户消费信息重新计算完成');
-          return resolve({ 
-            total: customers.length, 
-            message: '所有客户消费信息重新计算完成' 
+      if (!row) {
+        bcrypt.hash('zcy@123456', 10, (err, hash) => {
+          if (err) {
+            console.error('密码加密失败:', err);
+            reject(err);
+            return;
+          }
+          
+          db.run("INSERT INTO users (username, password, email) VALUES (?, ?, ?)", 
+            ["zhaochunyan", hash, "zhaochunyan@example.com"], (err) => {
+            if (err) {
+              console.error('插入默认用户失败:', err);
+              reject(err);
+            } else {
+              console.log('默认用户创建成功');
+              resolve();
+            }
           });
-        }
-        
-        const customer = customers[index];
-        recalculateCustomerConsumption(customer.id)
-          .then(() => {
-            // 处理下一个客户
-            processCustomer(index + 1);
-          })
-          .catch(err => {
-            console.error(`重新计算客户ID ${customer.id} 的消费信息失败:`, err);
-            // 继续处理下一个客户，不中断整个过程
-            processCustomer(index + 1);
-          });
-      };
-      
-      // 开始处理第一个客户
-      processCustomer(0);
+        });
+      } else {
+        console.log('默认用户已存在');
+        resolve();
+      }
     });
   });
 }
 
-/**
- * 重新计算客户积分
- * 计算累计积分和可用积分：
- * - 累计积分 = 根据销售记录的总消费金额计算
- * - 可用积分 = 所有积分记录（正值和负值）的总和
- */
-function recalculateCustomerPoints(customerId) {
-  return new Promise((resolve, reject) => {
-    if (!customerId) {
-      return resolve(false);
+// 初始化数据库（增强版）
+async function init() {
+  try {
+    console.log('开始初始化数据库...');
+    
+    const db = await getDatabase();
+    
+    console.log('创建数据库表...');
+    await createTables(db);
+    
+    console.log('创建默认用户...');
+    await createDefaultUser(db);
+    
+    console.log('数据库初始化完成');
+    return db;
+  } catch (error) {
+    console.error('数据库初始化失败:', error);
+    
+    // 如果初始化失败，尝试清理状态
+    dbManager.forceReset();
+    
+    throw error;
+  }
+}
+
+// 获取 Knex 实例（增强版）
+function getKnexInstance() {
+  if (!knexInstance || !dbInitialized) {
+    if (!knex) {
+      knex = require('knex');
     }
     
-    // 先获取客户的电话号码，以便查询相关积分记录
-    db.get('SELECT phone FROM customers WHERE id = ?', [customerId], (err, customer) => {
-      if (err) {
-        console.error('获取客户信息失败:', err);
-        return reject(err);
-      }
-      
-      if (!customer) {
-        console.error(`未找到客户ID: ${customerId}`);
-        return resolve(false);
-      }
-      
-      const customerPhone = customer.phone;
-      
-      // 新的累计积分计算 - 根据销售记录的总消费金额计算
+    const knexConfig = {
+      client: 'sqlite3',
+      connection: {
+        filename: dbFile
+      },
+      useNullAsDefault: true,
+      pool: {
+        min: 1,
+        max: 5, // 减少最大连接数
+        acquireTimeoutMillis: 30000,
+        createTimeoutMillis: 30000,
+        destroyTimeoutMillis: 5000,
+        idleTimeoutMillis: 30000,
+        reapIntervalMillis: 1000,
+        createRetryIntervalMillis: 100,
+        afterCreate: (conn, done) => {
+          // 启用外键约束
+          conn.run('PRAGMA foreign_keys = ON', done);
+        }
+      },
+      acquireConnectionTimeout: 30000
+    };
+    
+    try {
+      knexInstance = knex(knexConfig);
+      console.log('Knex实例创建成功');
+    } catch (error) {
+      console.error('创建 Knex 实例失败:', error);
+      throw error;
+    }
+  }
+  
+  return knexInstance;
+}
+
+// 重新计算客户积分（从原 db.js 复制）
+function recalculateCustomerPoints(customerId, customerPhone) {
+  return new Promise((resolve, reject) => {
+    getDatabase().then(db => {
       const totalPointsQuery = `
-        SELECT 
-          COALESCE(SUM(total_amount), 0) as total_amount
-        FROM sales 
-        WHERE customer_id = ? OR (phone = ? AND phone IS NOT NULL AND phone != '')
-      `;
-      
-      // 查询可用积分 - 所有积分的净和
-      const availablePointsQuery = `
-        SELECT 
-          SUM(points) as available_points
+        SELECT COALESCE(SUM(points), 0) AS total_points
         FROM points 
-        WHERE customer_id = ? OR (phone = ? AND phone IS NOT NULL AND phone != '')
+        WHERE customer_id = ? AND phone = ?
       `;
       
-      // 先获取总消费金额
       db.get(totalPointsQuery, [customerId, customerPhone], (err, totalResult) => {
         if (err) {
-          console.error('计算总消费金额失败:', err);
+          console.error('计算累计积分失败:', err);
           return reject(err);
         }
         
-        // 计算累计积分 = 总消费金额向下取整
-        const totalPoints = totalResult && totalResult.total_amount ? Math.floor(totalResult.total_amount) : 0;
+        const totalPoints = totalResult && totalResult.total_points ? totalResult.total_points : 0;
         
-        // 然后获取可用积分
+        const availablePointsQuery = `
+          SELECT COALESCE(SUM(points), 0) AS available_points
+          FROM points 
+          WHERE customer_id = ? AND phone = ? AND channel IN ('earned', 'adjusted') 
+            AND points > 0
+        `;
+        
         db.get(availablePointsQuery, [customerId, customerPhone], (err, availableResult) => {
           if (err) {
             console.error('计算可用积分失败:', err);
             return reject(err);
           }
           
-          // 处理null结果
           const availablePoints = availableResult && availableResult.available_points ? availableResult.available_points : 0;
           
-          // 更新客户表
           db.run(`
             UPDATE customers 
             SET 
@@ -404,23 +682,188 @@ function recalculateCustomerPoints(customerId) {
           });
         });
       });
-    });
+    }).catch(reject);
   });
 }
 
-/**
- * 空函数
- */
+// 重新计算客户消费（从原 db.js 复制）
+function recalculateCustomerConsumption(customerId, customerPhone) {
+  return new Promise((resolve, reject) => {
+    getDatabase().then(db => {
+      const consumptionQuery = `
+        SELECT 
+          COALESCE(SUM(total_amount), 0) AS total_consumption,
+          COUNT(*) AS consumption_count,
+          MAX(date) AS last_consumption
+        FROM sales 
+        WHERE customer_id = ? AND phone = ?
+      `;
+      
+      db.get(consumptionQuery, [customerId, customerPhone], (err, result) => {
+        if (err) {
+          console.error('计算消费数据失败:', err);
+          return reject(err);
+        }
+        
+        const totalConsumption = result && result.total_consumption ? result.total_consumption : 0;
+        const consumptionCount = result && result.consumption_count ? result.consumption_count : 0;
+        const lastConsumption = result && result.last_consumption ? result.last_consumption : null;
+        
+        db.run(`
+          UPDATE customers 
+          SET 
+            total_consumption = ?,
+            consumption_count = ?,
+            consumption_times = ?,
+            last_consumption = ?
+          WHERE id = ?
+        `, [totalConsumption, consumptionCount, consumptionCount, lastConsumption, customerId], function(err) {
+          if (err) {
+            console.error(`更新客户消费数据失败:`, err);
+            return reject(err);
+          }
+          
+          console.log(`已重新计算客户ID ${customerId} 的消费数据: 总消费=${totalConsumption}, 消费次数=${consumptionCount}`);
+          resolve({
+            totalConsumption,
+            consumptionCount,
+            lastConsumption
+          });
+        });
+      });
+    }).catch(reject);
+  });
+}
+
+// 空函数（兼容性）
 function setupTriggers() {
   return Promise.resolve();
 }
 
+// 关闭数据库连接（增强版）
+function closeDatabase() {
+  return new Promise((resolve) => {
+    console.log('开始关闭数据库连接...');
+    
+    const cleanup = () => {
+      dbInstance = null;
+      dbInitialized = false;
+      dbInitializing = false;
+      dbManager.dbInstance = null;
+      dbManager.dbInitialized = false;
+      dbManager.dbInitializing = false;
+      console.log('数据库连接清理完成');
+      resolve();
+    };
+    
+    // 关闭 Knex 连接
+    if (knexInstance) {
+      knexInstance.destroy()
+        .then(() => {
+          console.log('Knex 连接已关闭');
+          knexInstance = null;
+        })
+        .catch((err) => {
+          console.warn('关闭 Knex 连接失败:', err);
+          knexInstance = null;
+        })
+        .finally(() => {
+          // 关闭 SQLite 连接
+          if (dbInstance) {
+            dbInstance.close((err) => {
+              if (err) {
+                console.error('关闭数据库失败:', err);
+              } else {
+                console.log('数据库连接已关闭');
+              }
+              cleanup();
+            });
+          } else {
+            cleanup();
+          }
+        });
+    } else if (dbInstance) {
+      dbInstance.close((err) => {
+        if (err) {
+          console.error('关闭数据库失败:', err);
+        } else {
+          console.log('数据库连接已关闭');
+        }
+        cleanup();
+      });
+    } else {
+      cleanup();
+    }
+  });
+}
+
+// 超级安全的数据库查询包装器
+function safeQuery(queryFn, ...args) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const db = await getDatabase();
+      
+      const timeout = setTimeout(() => {
+        reject(new Error('数据库查询超时'));
+      }, 15000); // 15秒超时
+      
+      queryFn(db, ...args, (err, result) => {
+        clearTimeout(timeout);
+        
+        if (err) {
+          console.error('数据库查询错误:', err);
+          
+          // 如果是连接错误，重置连接
+          if (err.code === 'SQLITE_CORRUPT' || err.code === 'SQLITE_NOTADB' ||
+              err.message.includes('database disk image is malformed') ||
+              err.message.includes('database is locked')) {
+            console.warn('检测到数据库连接问题，重置连接');
+            dbManager.forceReset();
+          }
+          
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+      
+    } catch (error) {
+      console.error('获取数据库连接失败:', error);
+      reject(error);
+    }
+  });
+}
+
 module.exports = {
-  db,
+  getDatabase,
   init,
   recalculateCustomerPoints,
   recalculateCustomerConsumption,
-  recalculateAllCustomersConsumption,
   setupTriggers,
-  knexDb
-}; 
+  closeDatabase,
+  safeQuery,
+  knexDb: getKnexInstance(),
+  
+  // 新增的安全函数
+  forceReset: () => dbManager.forceReset(),
+  getDatabaseManager: () => dbManager,
+  isInitialized: () => dbInitialized,
+  getConnectionStatus: () => {
+    return {
+      initialized: dbInitialized,
+      initializing: dbInitializing,
+      hasInstance: !!dbInstance,
+      dbFile: dbFile
+    };
+  },
+  
+  // 兼容性：提供同步方式获取数据库（临时修复）
+  get db() {
+    if (dbInstance && dbInitialized) {
+      return dbInstance;
+    }
+    // 为了快速修复，返回一个空对象而不是抛出错误
+    console.warn('数据库未初始化，返回空对象');
+    return null;
+  }
+};

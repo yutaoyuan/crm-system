@@ -1,49 +1,57 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const { db } = require('../models/db');
+const { db, getDatabase } = require('../models/db');
 
 // 登录路由
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   
   if (!username || !password) {
     return res.status(400).json({ message: '用户名和密码不能为空' });
   }
   
-  db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
-    if (err) {
-      return res.status(500).json({ message: '服务器错误' });
-    }
+  try {
+    // 先尝试使用全局db对象，如果不可用则获取数据库连接
+    const database = db || await getDatabase();
     
-    if (!user) {
-      return res.status(401).json({ message: '用户名或密码错误' });
-    }
-    
-    bcrypt.compare(password, user.password, (err, match) => {
+    database.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
       if (err) {
         return res.status(500).json({ message: '服务器错误' });
       }
       
-      if (!match) {
+      if (!user) {
         return res.status(401).json({ message: '用户名或密码错误' });
       }
       
-      // 登录成功，创建会话
-      req.session.user = {
-        id: user.id,
-        username: user.username
-      };
-      
-      return res.status(200).json({ 
-        message: '登录成功',
-        user: {
+      bcrypt.compare(password, user.password, (err, match) => {
+        if (err) {
+          return res.status(500).json({ message: '服务器错误' });
+        }
+        
+        if (!match) {
+          return res.status(401).json({ message: '用户名或密码错误' });
+        }
+        
+        // 登录成功，创建会话
+        req.session.user = {
           id: user.id,
           username: user.username
-        }
+        };
+        
+        return res.status(200).json({ 
+          message: '登录成功',
+          user: {
+            id: user.id,
+            username: user.username
+          }
+        });
       });
     });
-  });
+  } catch (error) {
+    console.error('数据库连接失败:', error);
+    return res.status(500).json({ message: '服务器错误' });
+  }
 });
 
 // 检查登录状态

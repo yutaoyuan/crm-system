@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { db } = require('../models/db');
+const { db, getDatabase } = require('../models/db');
 const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
@@ -22,8 +22,17 @@ router.get('/util/customers', isAuthenticated, (req, res) => {
   });
 
 // Setup multer for file uploads
+const getUploadPath = () => {
+  if (process.resourcesPath) {
+    return path.join(process.resourcesPath, 'databaseFolder', 'uploads');
+  } else {
+    // 开发环境下使用项目目录
+    return path.join(__dirname, '..', 'databaseFolder', 'uploads');
+  }
+};
+
 const upload = multer({ 
-    dest: path.join(process.resourcesPath, 'databaseFolder', 'uploads'),
+    dest: getUploadPath(),
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
     fileFilter: function(req, file, cb) {
         console.log('文件类型:', file.mimetype, file.originalname);

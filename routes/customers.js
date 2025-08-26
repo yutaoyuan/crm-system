@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { db } = require('../models/db');
+const { db, getDatabase } = require('../models/db');
 const { isAuthenticated } = require('../middleware/auth');
 const fs = require('fs');
 const path = require('path');

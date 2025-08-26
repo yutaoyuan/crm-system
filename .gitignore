@@ -96,4 +96,4 @@ Desktop.ini
 
 # Electron特定
 electron-builder-effective-config.yaml
-builder-effective-config.yaml
+builder-effective-config.yaml*.patch

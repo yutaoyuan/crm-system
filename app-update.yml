@@ -1,0 +1,4 @@
+provider: github
+owner: yutaoyuan
+repo: crm-system
+updaterCacheDirName: crm-updater

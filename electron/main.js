@@ -50,7 +50,7 @@ ensureDirectoriesExist();
 // 创建主窗口函数
 async function createWindow() {
   try {
-    console.log('v1.0.19 - 开始创建窗口，使用超稳定数据库连接...');
+    console.log('v1.0.20 - 开始创建窗口，使用超稳定数据库连接...');
     
     // 等待数据库初始化完成
     const { init } = require('../models/db');
@@ -132,7 +132,7 @@ async function createWindow() {
     const { dialog } = require('electron');
     const errorMessage = error.stack || error.message || '未知错误';
     
-    dialog.showErrorBox('初始化失败', `应用初始化失败：\n\n${errorMessage}\n\nv1.0.19 包含了完整的自动更新机制。\n如果问题持续出现，请重启应用或联系技术支持。`);
+    dialog.showErrorBox('初始化失败', `应用初始化失败：\n\n${errorMessage}\n\nv1.0.20 包含了完整的自动更新配置。\n如果问题持续出现，请重启应用或联系技术支持。`);
     
     // 如果是数据库相关错误，尝试强制重置
     if (error.message && (error.message.includes('database') || error.message.includes('sqlite'))) {

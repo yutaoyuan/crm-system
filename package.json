@@ -1,6 +1,6 @@
 {
   "name": "crm",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "客户资料管理系统",
   "main": "electron/main.js",
   "scripts": {
@@ -76,7 +76,8 @@
       "**/*",
       "!dist/**/*",
       "!.github/**/*",
-      "!*.md"
+      "!*.md",
+      "app-update.yml"
     ],
     "publish": [
       {
@@ -110,7 +111,9 @@
           ]
         }
       ],
-      "category": "public.app-category.business"
+      "category": "public.app-category.business",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
     },
     "nsis": {
       "oneClick": false,

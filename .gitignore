@@ -97,3 +97,18 @@ Desktop.ini
 # Electron特定
 electron-builder-effective-config.yaml
 builder-effective-config.yaml*.patch
+
+# Electron 应用数据目录
+databaseFolder/Cache/
+databaseFolder/Code\ Cache/
+databaseFolder/Cookies*
+databaseFolder/Local\ Storage/
+databaseFolder/Network\ Persistent\ State
+databaseFolder/Partitions/
+databaseFolder/Preferences
+databaseFolder/Session\ Storage/
+databaseFolder/Shared\ Dictionary/
+databaseFolder/Trust\ Tokens*
+databaseFolder/WebStorage/
+databaseFolder/logs/
+databaseFolder/sessions/

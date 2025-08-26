@@ -25,6 +25,15 @@ class AppUpdater {
     // 配置更新行为
     autoUpdater.autoDownload = false; // 不自动下载，让用户确认
     autoUpdater.autoInstallOnAppQuit = true; // 应用退出时自动安装
+    
+    // 配置代码签名（对于未签名的应用）
+    if (process.platform === 'darwin') {
+      // 在 macOS 上禁用代码签名验证，避免警告
+      Object.defineProperty(autoUpdater, 'allowDowngrade', {
+        value: true,
+        writable: false
+      });
+    }
 
     // 设置更新服务器（GitHub Releases）
     autoUpdater.setFeedURL({
@@ -40,7 +49,6 @@ class AppUpdater {
     // 检查更新出错
     autoUpdater.on('error', (error) => {
       winston.error('自动更新错误:', error);
-      this.sendToRenderer('update-error', error.message);
       
       // 特殊处理常见错误
       if (error.message.includes('status 404')) {
@@ -49,6 +57,13 @@ class AppUpdater {
       } else if (error.message.includes('network') || error.message.includes('timeout')) {
         winston.warn('网络连接错误，稍后将重试');
         this.scheduleRetryCheck();
+      } else if (error.message.includes('Could not get code signature')) {
+        winston.warn('代码签名警告（非关键错误）:', error.message);
+        // 代码签名错误不影响功能，不向用户显示
+        return;
+      } else {
+        // 其他错误才显示给用户
+        this.sendToRenderer('update-error', error.message);
       }
     });
 

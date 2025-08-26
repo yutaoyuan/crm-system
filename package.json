@@ -113,7 +113,9 @@
       ],
       "category": "public.app-category.business",
       "hardenedRuntime": false,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "identity": null,
+      "type": "development"
     },
     "nsis": {
       "oneClick": false,

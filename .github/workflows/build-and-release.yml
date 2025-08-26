@@ -17,7 +17,7 @@ jobs:
     
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [macos-latest, windows-latest]
         
     steps:
       - name: Checkout code
@@ -30,25 +30,30 @@ jobs:
           cache: 'npm'
           
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm config set registry https://registry.npmmirror.com/
+          npm install
         env:
           ELECTRON_MIRROR: https://cdn.npmmirror.com/binaries/electron/
-        
+          
+      - name: Verify installation
+        run: |
+          npm list electron-builder
+          npm list electron-updater
+          
       - name: Build for Windows
         if: matrix.os == 'windows-latest'
-        run: npm run build
+        run: |
+          set NODE_ENV=production
+          npm run build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Build for macOS
         if: matrix.os == 'macos-latest'
-        run: npm run build
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Build for Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: npm run build
+        run: |
+          export NODE_ENV=production
+          npm run build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
@@ -89,8 +94,6 @@ jobs:
           files: |
             dist-windows-latest/*.exe
             dist-macos-latest/*.dmg
-            dist-ubuntu-latest/*.AppImage
-            dist-ubuntu-latest/*.deb
           body_path: release_notes.txt
           draft: false
           prerelease: false

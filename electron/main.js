@@ -64,7 +64,7 @@ function checkDatabaseFile() {
 // 创建主窗口函数
 async function createWindow() {
   try {
-    console.log('v1.0.21 - 开始创建窗口，使用超稳定数据库连接...');
+    console.log(`v${require('../package.json').version} - 开始创建窗口，使用超稳定数据库连接...`);
     
     // 检查数据库文件
     checkDatabaseFile();
@@ -152,7 +152,7 @@ async function createWindow() {
     const { dialog } = require('electron');
     const errorMessage = error.stack || error.message || '未知错误';
     
-    dialog.showErrorBox('初始化失败', `应用初始化失败：\n\n${errorMessage}\n\nv1.0.21 为稳定版本，包含所有修复。\n如果问题持续出现，请重启应用或联系技术支持。`);
+    dialog.showErrorBox('初始化失败', `应用初始化失败：\n\n${errorMessage}\n\nv${require('../package.json').version} 为稳定版本，包含所有修复。\n如果问题持续出现，请重启应用或联系技术支持。`);
     
     // 如果是数据库相关错误，尝试强制重置
     if (error.message && (error.message.includes('database') || error.message.includes('sqlite'))) {

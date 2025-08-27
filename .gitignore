@@ -65,10 +65,14 @@ logs
 *.log
 
 # 数据库
-*.db
-*.db3
-*.sqlite
-*.sqlite3
+# 只排除运行时生成的数据库文件，不排除开发环境的主数据库文件
+sessions.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 
 # 证书文件（安全）
 certs/*.p12

@@ -98,7 +98,16 @@ app.use((req, res, next) => {
 });
 
 // 配置会话（使用安全配置）
-const sessionStorePath = path.join(process.resourcesPath, 'databaseFolder');
+let sessionStorePath;
+if (process.versions && process.versions.electron) {
+  // 在 Electron 环境中，使用用户数据目录
+  const { app } = require('electron');
+  sessionStorePath = app.getPath('userData');
+} else {
+  // 非 Electron 环境
+  sessionStorePath = path.join(__dirname, 'databaseFolder');
+}
+
 app.use(session({
   store: new SQLiteStore({
     db: 'sessions.db',

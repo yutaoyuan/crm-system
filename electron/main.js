@@ -205,9 +205,27 @@ app.on('before-quit', (event) => {
     console.log('正在安装更新，允许应用退出');
     // 添加更多日志来跟踪退出过程
     console.log('等待自动更新器完成安装...');
+    
+    // 确保服务器已关闭
+    if (serverProcess) {
+      try {
+        console.log('关闭服务器...');
+        serverProcess.close();
+        console.log('服务器已关闭');
+      } catch (error) {
+        console.error('关闭服务器失败:', error);
+      }
+      serverProcess = null;
+    }
+    
+    // 不阻止退出，但添加一个小延迟确保日志能被记录
+    setTimeout(() => {
+      console.log('应用退出完成');
+    }, 100);
     return; // 不阻止退出
   }
   
+  // 正常退出流程
   if (serverProcess) {
     try {
       serverProcess.close();

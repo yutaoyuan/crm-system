@@ -271,17 +271,25 @@ class AppUpdater {
       // 给渲染进程一些时间来处理这个消息
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // 确保主窗口已关闭，避免更新时文件被占用
+      if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+        winston.info('关闭主窗口...');
+        this.mainWindow.destroy();
+        this.mainWindow = null;
+      }
+      
       // 尝试不同的参数组合，确保应用能正确关闭
       // 第一个参数：是否静默重启（true = 静默重启）
       // 第二个参数：是否强制关闭（true = 强制关闭）
-      autoUpdater.quitAndInstall(true, true);
+      autoUpdater.quitAndInstall(false, true);
       
       // 如果 quitAndInstall 没有立即关闭应用，尝试手动关闭
       setTimeout(() => {
         winston.warn('quitAndInstall 未能立即关闭应用，尝试手动关闭...');
         const { app } = require('electron');
-        app.quit();
-      }, 5000); // 增加到5秒等待时间
+        // 强制退出应用
+        app.exit(0);
+      }, 10000); // 增加到10秒等待时间
       
     } catch (error) {
       winston.error('安装更新失败:', error);
@@ -300,7 +308,7 @@ class AppUpdater {
         // 用户确认后，尝试强制关闭应用
         const { app } = require('electron');
         setTimeout(() => {
-          app.quit();
+          app.exit(0);
         }, 1000);
       });
     }

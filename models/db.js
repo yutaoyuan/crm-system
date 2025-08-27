@@ -96,7 +96,65 @@ function getDatabasePath() {
   }
 }
 
-const dbFile = getDatabasePath();
+// 确保数据库文件存在（从构建时包含的数据库文件复制）
+function ensureDatabaseFile() {
+  const dbFile = getDatabasePath();
+  
+  // 检查数据库文件是否已存在
+  if (!fs.existsSync(dbFile)) {
+    console.log('数据库文件不存在，尝试从构建时包含的文件复制...');
+    
+    // 在 Electron 环境中，尝试从应用资源目录复制数据库文件
+    if (process.versions && process.versions.electron) {
+      // 获取应用资源目录中的数据库文件路径
+      let sourceDbPath;
+      
+      // 尝试不同的路径
+      if (process.resourcesPath) {
+        sourceDbPath = path.join(process.resourcesPath, 'databaseFolder', 'database.db3');
+      } else {
+        sourceDbPath = path.join(__dirname, '../databaseFolder/database.db3');
+      }
+      
+      // 检查源文件是否存在
+      if (fs.existsSync(sourceDbPath)) {
+        try {
+          // 确保目标目录存在
+          const dbDir = path.dirname(dbFile);
+          if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true });
+          }
+          
+          // 复制数据库文件
+          fs.copyFileSync(sourceDbPath, dbFile);
+          console.log('数据库文件复制成功:', sourceDbPath, '->', dbFile);
+          
+          // 同时复制相关的 WAL 和 SHM 文件（如果存在）
+          const walFile = sourceDbPath + '-wal';
+          const shmFile = sourceDbPath + '-shm';
+          
+          if (fs.existsSync(walFile)) {
+            fs.copyFileSync(walFile, dbFile + '-wal');
+            console.log('WAL文件复制成功');
+          }
+          
+          if (fs.existsSync(shmFile)) {
+            fs.copyFileSync(shmFile, dbFile + '-shm');
+            console.log('SHM文件复制成功');
+          }
+        } catch (copyError) {
+          console.error('复制数据库文件失败:', copyError);
+        }
+      } else {
+        console.log('源数据库文件不存在:', sourceDbPath);
+      }
+    }
+  }
+  
+  return dbFile;
+}
+
+const dbFile = ensureDatabaseFile();
 
 // 确保数据库目录存在（增强版）
 function ensureDatabaseDirectory() {
@@ -141,8 +199,6 @@ function createUltraSafeConnection() {
       if (!sqlite3) {
         sqlite3 = require('sqlite3').verbose();
       }
-      
-      ensureDatabaseDirectory();
       
       console.log('尝试创建数据库连接:', dbFile);
       

@@ -278,18 +278,44 @@ class AppUpdater {
         this.mainWindow = null;
       }
       
+      // 添加更多资源释放步骤
+      // 确保所有 IPC 监听器都被移除
+      winston.info('清理 IPC 监听器...');
+      
+      // 关闭数据库连接
+      try {
+        const { closeDatabase } = require('../models/db');
+        await closeDatabase();
+        winston.info('数据库连接已关闭');
+      } catch (dbError) {
+        winston.warn('关闭数据库连接时出错:', dbError.message);
+      }
+      
       // 尝试不同的参数组合，确保应用能正确关闭
       // 第一个参数：是否静默重启（true = 静默重启）
       // 第二个参数：是否强制关闭（true = 强制关闭）
-      autoUpdater.quitAndInstall(false, true);
+      winston.info('调用 quitAndInstall(true, true)...');
+      autoUpdater.quitAndInstall(true, true);
       
       // 如果 quitAndInstall 没有立即关闭应用，尝试手动关闭
       setTimeout(() => {
         winston.warn('quitAndInstall 未能立即关闭应用，尝试手动关闭...');
         const { app } = require('electron');
-        // 强制退出应用
-        app.exit(0);
-      }, 10000); // 增加到10秒等待时间
+        
+        // 尝试多种关闭方式
+        try {
+          winston.info('尝试 app.quit()...');
+          app.quit();
+        } catch (quitError) {
+          winston.warn('app.quit() 失败:', quitError.message);
+        }
+        
+        // 如果 app.quit() 不起作用，使用 app.exit()
+        setTimeout(() => {
+          winston.info('尝试 app.exit(0)...');
+          app.exit(0);
+        }, 2000);
+      }, 15000); // 增加到15秒等待时间
       
     } catch (error) {
       winston.error('安装更新失败:', error);
@@ -308,7 +334,11 @@ class AppUpdater {
         // 用户确认后，尝试强制关闭应用
         const { app } = require('electron');
         setTimeout(() => {
-          app.exit(0);
+          try {
+            app.quit();
+          } catch (quitError) {
+            app.exit(0);
+          }
         }, 1000);
       });
     }

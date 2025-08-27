@@ -1,6 +1,6 @@
 {
   "name": "crm",
-  "version": "1.0.49",
+  "version": "1.0.50",
   "description": "客户资料管理系统",
   "main": "electron/main.js",
   "scripts": {

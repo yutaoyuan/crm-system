@@ -291,10 +291,29 @@ class AppUpdater {
         winston.warn('关闭数据库连接时出错:', dbError.message);
       }
       
+      // 针对 macOS 的特殊处理
+      if (process.platform === 'darwin') {
+        winston.info('执行 macOS 特殊处理...');
+        // 在 macOS 上，可能需要先隐藏应用窗口
+        try {
+          const { app } = require('electron');
+          if (app.dock) {
+            app.dock.hide();
+          }
+        } catch (dockError) {
+          winston.warn('隐藏 dock 图标时出错:', dockError.message);
+        }
+      }
+      
       // 尝试不同的参数组合，确保应用能正确关闭
       // 第一个参数：是否静默重启（true = 静默重启）
       // 第二个参数：是否强制关闭（true = 强制关闭）
       winston.info('调用 quitAndInstall(true, true)...');
+      
+      // 添加一个小延迟确保所有资源都已释放
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 调用 quitAndInstall
       autoUpdater.quitAndInstall(true, true);
       
       // 如果 quitAndInstall 没有立即关闭应用，尝试手动关闭
@@ -315,7 +334,7 @@ class AppUpdater {
           winston.info('尝试 app.exit(0)...');
           app.exit(0);
         }, 2000);
-      }, 15000); // 增加到15秒等待时间
+      }, 20000); // 增加到20秒等待时间
       
     } catch (error) {
       winston.error('安装更新失败:', error);

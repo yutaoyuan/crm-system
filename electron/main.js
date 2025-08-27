@@ -218,6 +218,19 @@ app.on('before-quit', (event) => {
       serverProcess = null;
     }
     
+    // 针对 macOS 的特殊处理
+    if (process.platform === 'darwin') {
+      console.log('执行 macOS 退出特殊处理...');
+      // 在 macOS 上，可能需要先隐藏应用窗口
+      try {
+        if (app.dock) {
+          app.dock.hide();
+        }
+      } catch (dockError) {
+        console.warn('隐藏 dock 图标时出错:', dockError.message);
+      }
+    }
+    
     // 不阻止退出，但添加一个小延迟确保日志能被记录
     setTimeout(() => {
       console.log('应用退出完成');

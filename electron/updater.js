@@ -63,6 +63,7 @@ class AppUpdater {
       } else if (error.message.includes('Could not get code signature')) {
         winston.debug('代码签名警告（非关键问题）:', error.message);
         // 代码签名错误不影响功能，不向用户显示，也不记录为错误
+        // 这在开发环境中是正常的，因为应用未签名
         return;
       } else {
         // 其他错误才记录为错误并显示给用户

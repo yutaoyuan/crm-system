@@ -84,27 +84,9 @@ let knexInstance = null;
 
 // 获取数据库路径
 function getDatabasePath() {
-  const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_DEV === '1';
-  
-  if (isDev) {
-    return path.join(__dirname, '../databaseFolder/database.db3');
-  } else {
-    // 生产环境路径处理
-    if (process.versions && process.versions.electron) {
-      // Electron 环境
-      if (process.resourcesPath) {
-        return path.join(process.resourcesPath, 'databaseFolder', 'database.db3');
-      } else {
-        // 回退路径
-        return path.join(__dirname, '../databaseFolder/database.db3');
-      }
-    } else {
-      // 非 Electron 环境
-      const os = require('os');
-      const userDataPath = path.join(os.homedir(), '.crm-system');
-      return path.join(userDataPath, 'database.db3');
-    }
-  }
+  // 修改逻辑：无论开发环境还是生产环境，都使用相同的数据库文件路径
+  // 这样可以确保生产环境也能使用开发环境的数据库文件
+  return path.join(__dirname, '../databaseFolder/database.db3');
 }
 
 const dbFile = getDatabasePath();

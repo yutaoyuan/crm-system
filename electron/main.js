@@ -9,18 +9,8 @@ let appUpdater;
 
 // 设置应用数据路径
 let userDataPath;
-if (process.env.ELECTRON_DEV === '1' || process.env.NODE_ENV === 'development') {
-  // 开发环境
-  userDataPath = path.join(__dirname, '../databaseFolder');
-} else {
-  // 生产环境
-  if (process.resourcesPath) {
-    userDataPath = path.join(process.resourcesPath, 'databaseFolder');
-  } else {
-    // 回退路径
-    userDataPath = path.join(__dirname, '../databaseFolder');
-  }
-}
+userDataPath = path.join(__dirname, '../databaseFolder');
+
 app.setPath('userData', userDataPath);
 
 // 确保必要的目录存在

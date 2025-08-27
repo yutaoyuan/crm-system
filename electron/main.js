@@ -3,6 +3,9 @@ const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
 
+// 禁用硬件加速以修复EGL驱动错误
+app.disableHardwareAcceleration();
+
 let mainWindow;
 let serverProcess;
 let appUpdater;

@@ -183,6 +183,8 @@ app.on('before-quit', (event) => {
   // 如果是更新安装引起的退出，不要阻止
   if (appUpdater && appUpdater.isInstalling) {
     console.log('正在安装更新，允许应用退出');
+    // 添加更多日志来跟踪退出过程
+    console.log('等待自动更新器完成安装...');
     return; // 不阻止退出
   }
   
@@ -211,6 +213,18 @@ ipcMain.handle('prepare-for-update', async () => {
     }
     serverProcess = null;
   }
+  
+  return true;
+});
+
+// 添加新的 IPC 处理程序来接收来自更新器的消息
+ipcMain.handle('app-will-quit-for-update', async () => {
+  console.log('收到应用即将为更新而退出的通知');
+  // 在这里可以执行任何需要在应用退出前完成的操作
+  console.log('执行更新前的最后清理工作...');
+  
+  // 确保所有未保存的数据都已保存
+  // 这里可以添加任何需要在更新前执行的清理工作
   
   return true;
 });

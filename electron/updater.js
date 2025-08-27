@@ -264,6 +264,13 @@ class AppUpdater {
       
       winston.info('执行 quitAndInstall...');
       
+      // 在执行 quitAndInstall 前，确保所有资源都已释放
+      // 发送一个特殊的 IPC 消息给渲染进程，让它知道即将退出
+      this.sendToRenderer('app-will-quit-for-update');
+      
+      // 给渲染进程一些时间来处理这个消息
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // 尝试不同的参数组合，确保应用能正确关闭
       // 第一个参数：是否静默重启（true = 静默重启）
       // 第二个参数：是否强制关闭（true = 强制关闭）
@@ -274,7 +281,7 @@ class AppUpdater {
         winston.warn('quitAndInstall 未能立即关闭应用，尝试手动关闭...');
         const { app } = require('electron');
         app.quit();
-      }, 3000);
+      }, 5000); // 增加到5秒等待时间
       
     } catch (error) {
       winston.error('安装更新失败:', error);

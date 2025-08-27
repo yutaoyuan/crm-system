@@ -123,8 +123,18 @@ class AppUpdater {
       message: '差分更新失败，将使用完整下载'
     });
     
-    // 可以在这里添加特殊的处理逻辑
-    // 比如立即重新检查更新或提示用户
+    // 向用户显示友好的提示信息
+    const { dialog } = require('electron');
+    dialog.showMessageBox(this.mainWindow, {
+      type: 'info',
+      title: '更新提示',
+      message: '正在为您下载完整更新包',
+      detail: '由于差分更新文件不可用，系统将自动为您下载完整更新包。这可能需要一些时间，请耐心等待。',
+      buttons: ['确定']
+    }).catch(err => {
+      // 忽略对话框错误
+      winston.warn('显示差分更新提示对话框时出错:', err.message);
+    });
   }
 
   // 处理更新文件未找到的情况

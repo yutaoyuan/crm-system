@@ -67,9 +67,15 @@
       {
         "from": "databaseFolder/",
         "to": "databaseFolder/",
-        "filter": [
-          "**/*"
-        ]
+        "filter": ["**/*"]
+      }
+    ],
+    // 添加 extraFiles 配置，将数据库文件复制到应用资源目录
+    "extraFiles": [
+      {
+        "from": "databaseFolder/",
+        "to": "databaseFolder/",
+        "filter": ["**/*"]
       }
     ],
     "directories": {

@@ -9,8 +9,12 @@ let appUpdater;
 
 // 设置应用数据路径
 let userDataPath;
-userDataPath = path.join(__dirname, '../databaseFolder');
+// 修改逻辑：使用 Electron 的用户数据目录，而不是应用资源目录
+userDataPath = app.getPath('userData');
+// 确保 databaseFolder 在用户数据目录中
+userDataPath = path.join(userDataPath, 'databaseFolder');
 
+// 设置用户数据路径
 app.setPath('userData', userDataPath);
 
 // 确保必要的目录存在

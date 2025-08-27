@@ -84,9 +84,16 @@ let knexInstance = null;
 
 // 获取数据库路径
 function getDatabasePath() {
-  // 修改逻辑：无论开发环境还是生产环境，都使用相同的数据库文件路径
-  // 这样可以确保生产环境也能使用开发环境的数据库文件
-  return path.join(__dirname, '../databaseFolder/database.db3');
+  // 检查是否在 Electron 环境中
+  if (process.versions && process.versions.electron) {
+    // 在 Electron 环境中，使用用户数据目录
+    const { app } = require('electron');
+    const userDataPath = app.getPath('userData');
+    return path.join(userDataPath, 'database.db3');
+  } else {
+    // 非 Electron 环境（开发环境直接运行 Node.js）
+    return path.join(__dirname, '../databaseFolder/database.db3');
+  }
 }
 
 const dbFile = getDatabasePath();

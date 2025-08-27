@@ -627,10 +627,10 @@ function verifyDatabaseTables(db) {
   });
 }
 
-// 初始化数据库（安全版本 - 避免数据丢失）
+// 初始化数据库（生产环境使用预置数据库文件）
 async function init() {
   try {
-    console.log('\n=== 开始安全初始化数据库 ===');
+    console.log('\n=== 开始数据库连接 ===');
     console.log('数据库文件路径:', dbFile);
     
     // 检查数据库文件是否已存在
@@ -641,39 +641,65 @@ async function init() {
     const db = await getDatabase();
     console.log('✓ 数据库连接建立成功');
     
-    if (!dbExists) {
-      console.log('\n--- 创建新数据库 ---');
-      console.log('检测到数据库文件不存在，开始创建新的数据库表和默认数据...');
+    // 检查是否为开发环境
+    const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_DEV === '1';
+    
+    if (!isDev) {
+      // 生产环境：直接使用预置的数据库文件，不进行任何初始化操作
+      console.log('\n--- 生产环境模式 ---');
+      console.log('使用预置数据库文件，跳过初始化过程');
       
-      console.log('正在创建数据库表...');
-      await createTables(db);
-      console.log('✓ 数据库表创建完成');
-      
-      console.log('正在创建默认用户...');
-      await createDefaultUser(db);
-      console.log('✓ 默认用户创建完成');
-      
-      console.log('\n✓ 新数据库初始化完成\n');
-    } else {
-      console.log('\n--- 验证现有数据库 ---');
-      console.log('检测到数据库文件已存在，进行安全验证...');
-      
-      // 只验证表是否存在，不强制重建
+      // 验证数据库完整性
       try {
         const verifyResult = await verifyDatabaseTables(db);
         
         if (verifyResult.hasAllTables) {
-          console.log('✓ 数据库表结构验证通过，所有必需的表都存在');
+          console.log('✓ 数据库完整性验证通过');
         } else {
-          console.log(`⚠️  数据库表结构不完整，缺失 ${verifyResult.missingTables.length} 个表`);
-          console.log('为保护现有数据，不会自动创建缺失的表');
-          console.log('如果需要创建缺失的表，请手动操作或备份数据后重新创建数据库');
+          console.warn(`⚠️  数据库表结构不完整，缺失 ${verifyResult.missingTables.length} 个表`);
+          console.log('缺失表:', verifyResult.missingTables.join(', '));
         }
       } catch (verifyError) {
-        console.warn('⚠️  数据库表结构验证失败，但继续使用现有数据库:', verifyError.message);
+        console.warn('⚠️  数据库完整性验证失败:', verifyError.message);
       }
       
-      console.log('\n✓ 现有数据库连接完成，所有数据安全保留\n');
+      console.log('✓ 生产环境数据库准备完成\n');
+    } else {
+      // 开发环境：保持原有的初始化逻辑
+      console.log('\n--- 开发环境模式 ---');
+      
+      if (!dbExists) {
+        console.log('检测到数据库文件不存在，开始创建新的数据库表和默认数据...');
+        
+        console.log('正在创建数据库表...');
+        await createTables(db);
+        console.log('✓ 数据库表创建完成');
+        
+        console.log('正在创建默认用户...');
+        await createDefaultUser(db);
+        console.log('✓ 默认用户创建完成');
+        
+        console.log('\n✓ 新数据库初始化完成\n');
+      } else {
+        console.log('检测到数据库文件已存在，进行安全验证...');
+        
+        // 只验证表是否存在，不强制重建
+        try {
+          const verifyResult = await verifyDatabaseTables(db);
+          
+          if (verifyResult.hasAllTables) {
+            console.log('✓ 数据库表结构验证通过，所有必需的表都存在');
+          } else {
+            console.log(`⚠️  数据库表结构不完整，缺失 ${verifyResult.missingTables.length} 个表`);
+            console.log('为保护现有数据，不会自动创建缺失的表');
+            console.log('如果需要创建缺失的表，请手动操作或备份数据后重新创建数据库');
+          }
+        } catch (verifyError) {
+          console.warn('⚠️  数据库表结构验证失败，但继续使用现有数据库:', verifyError.message);
+        }
+        
+        console.log('\n✓ 现有数据库连接完成，所有数据安全保留\n');
+      }
     }
     
     console.log('=== 数据库初始化完成 ===\n');

@@ -65,8 +65,9 @@
     ],
     "extraResources": [
       {
-        "from": "databaseFolder",
-        "to": "databaseFolder"
+        "from": "databaseFolder/",
+        "to": "databaseFolder/",
+        "filter": ["**/*"]
       }
     ],
     "directories": {

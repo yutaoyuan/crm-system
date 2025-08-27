@@ -57,7 +57,7 @@ class AppUpdater {
         winston.warn('差分更新失败，回退到完整下载:', error.message);
         // 差分更新失败时，尝试完整下载
         this.handleDifferentialDownloadFailure(error);
-      } else if (error.message.includes('network') || error.message.includes('timeout')) {
+      } else if (error.message.includes('network') || error.message.includes('timeout') || error.message.includes('ERR_HTTP2_PROTOCOL_ERROR')) {
         winston.warn('网络连接错误，稍后将重试');
         this.scheduleRetryCheck();
       } else if (error.message.includes('Could not get code signature')) {
@@ -253,6 +253,16 @@ class AppUpdater {
           detail: '新版本可能正在发布中，请稍后再试。系统将在后台自动重试。',
           buttons: ['确定']
         });
+      } else if (error.message.includes('ERR_HTTP2_PROTOCOL_ERROR')) {
+        dialog.showMessageBox(this.mainWindow, {
+          type: 'warning',
+          title: '网络连接错误',
+          message: '网络连接出现问题',
+          detail: '可能是网络不稳定或服务器连接问题导致的错误，系统将在稍后自动重试。',
+          buttons: ['确定']
+        });
+        // 安排重试检查
+        this.scheduleRetryCheck();
       } else {
         dialog.showMessageBox(this.mainWindow, {
           type: 'error',

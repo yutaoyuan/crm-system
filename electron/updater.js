@@ -53,6 +53,10 @@ class AppUpdater {
       if (error.message.includes('status 404')) {
         winston.warn('更新文件未找到（404错误），可能是版本发布尚未完成');
         this.handleUpdateFileNotFound(error);
+      } else if (error.message.includes('Cannot download differentially')) {
+        winston.warn('差分更新失败，回退到完整下载:', error.message);
+        // 差分更新失败时，尝试完整下载
+        this.handleDifferentialDownloadFailure(error);
       } else if (error.message.includes('network') || error.message.includes('timeout')) {
         winston.warn('网络连接错误，稍后将重试');
         this.scheduleRetryCheck();
@@ -109,6 +113,18 @@ class AppUpdater {
       this.sendToRenderer('update-downloaded', info);
       this.showInstallDialog(info);
     });
+  }
+
+  // 处理差分更新失败的情况
+  handleDifferentialDownloadFailure(error) {
+    winston.info('处理差分更新失败，尝试完整下载...');
+    // 显示提示信息给用户
+    this.sendToRenderer('differential-download-failed', {
+      message: '差分更新失败，将使用完整下载'
+    });
+    
+    // 可以在这里添加特殊的处理逻辑
+    // 比如立即重新检查更新或提示用户
   }
 
   // 处理更新文件未找到的情况

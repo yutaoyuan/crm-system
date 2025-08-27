@@ -14,6 +14,9 @@ userDataPath = app.getPath('userData');
 // 确保 databaseFolder 在用户数据目录中
 userDataPath = path.join(userDataPath, 'databaseFolder');
 
+console.log('应用用户数据路径:', userDataPath);
+console.log('应用资源路径:', process.resourcesPath);
+
 // 设置用户数据路径
 app.setPath('userData', userDataPath);
 
@@ -34,6 +37,8 @@ function ensureDirectoriesExist() {
       } catch (err) {
         console.warn(`无法创建目录 ${dir}:`, err.message);
       }
+    } else {
+      console.log('目录已存在:', dir);
     }
   });
 }
@@ -41,16 +46,37 @@ function ensureDirectoriesExist() {
 // 在应用启动时立即创建目录
 ensureDirectoriesExist();
 
+// 检查数据库文件是否存在
+function checkDatabaseFile() {
+  const dbPath = path.join(userDataPath, 'database.db3');
+  console.log('检查数据库文件路径:', dbPath);
+  
+  if (fs.existsSync(dbPath)) {
+    const stats = fs.statSync(dbPath);
+    console.log('数据库文件存在，大小:', stats.size, 'bytes');
+    return true;
+  } else {
+    console.log('数据库文件不存在');
+    return false;
+  }
+}
+
 // 创建主窗口函数
 async function createWindow() {
   try {
     console.log('v1.0.21 - 开始创建窗口，使用超稳定数据库连接...');
+    
+    // 检查数据库文件
+    checkDatabaseFile();
     
     // 等待数据库初始化完成
     const { init } = require('../models/db');
     console.log('开始初始化数据库...');
     await init();
     console.log('数据库初始化完成');
+    
+    // 再次检查数据库文件
+    checkDatabaseFile();
     
     // 获取 Express 应用和端口
     const { app: serverApp, PORT } = require('../app');

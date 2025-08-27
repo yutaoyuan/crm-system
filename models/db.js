@@ -1,7 +1,10 @@
 /**
  * 超稳定的数据库连接模块 - 彻底解决 SQLite 崩溃问题
  * 
- * v1.0.14 关键改进：
+ * v1.0.37 关键改进：
+ * 1. 修复构建后应用中数据库文件复制问题
+ * 2. 增强 ASAR 包中数据库文件路径处理
+ * 3. 改进数据库文件复制日志和错误处理
  * 1. 进程级错误捕获和恢复
  * 2. 连接池与单例模式结合
  * 3. 异步操作超时保护
@@ -112,8 +115,19 @@ function ensureDatabaseFile() {
       // 尝试不同的路径
       if (process.resourcesPath) {
         sourceDbPath = path.join(process.resourcesPath, 'databaseFolder', 'database.db3');
+        console.log('尝试从 resourcesPath 查找源数据库文件:', sourceDbPath);
       } else {
         sourceDbPath = path.join(__dirname, '../databaseFolder/database.db3');
+        console.log('尝试从 __dirname 查找源数据库文件:', sourceDbPath);
+      }
+      
+      // 如果在 ASAR 包中，需要特殊处理
+      if (sourceDbPath.includes('.asar')) {
+        // 从 ASAR 包外查找数据库文件
+        const asarPath = sourceDbPath.split('.asar')[0] + '.asar';
+        const relativePath = sourceDbPath.split('.asar')[1];
+        sourceDbPath = path.join(path.dirname(asarPath), relativePath);
+        console.log('修正 ASAR 路径后的源数据库文件路径:', sourceDbPath);
       }
       
       // 检查源文件是否存在
@@ -147,8 +161,22 @@ function ensureDatabaseFile() {
         }
       } else {
         console.log('源数据库文件不存在:', sourceDbPath);
+        // 列出可能的源目录内容以帮助调试
+        try {
+          const sourceDir = path.dirname(sourceDbPath);
+          if (fs.existsSync(sourceDir)) {
+            const files = fs.readdirSync(sourceDir);
+            console.log('源目录内容:', files);
+          } else {
+            console.log('源目录不存在:', sourceDir);
+          }
+        } catch (dirError) {
+          console.error('读取源目录失败:', dirError);
+        }
       }
     }
+  } else {
+    console.log('数据库文件已存在，无需复制');
   }
   
   return dbFile;

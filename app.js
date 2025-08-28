@@ -23,6 +23,7 @@ const customerRoutes = require('./routes/customers');
 const salesRoutes = require('./routes/sales');
 const pointsRoutes = require('./routes/points');
 const visitsRoutes = require('./routes/visits');
+const hotUpdateRoutes = require('./routes/hotUpdate');
 
 const app = express();
 let PORT = process.env.PORT || 3002;
@@ -147,6 +148,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/points', pointsRoutes);
 app.use('/api/visits', visitsRoutes);
+app.use('/api/hot-update', hotUpdateRoutes);
 
 // 前端页面
 app.get('/', (req, res) => {

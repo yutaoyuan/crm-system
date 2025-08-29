@@ -1,0 +1,61 @@
+name: Release (Windows)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild native modules (sqlite3)
+        run: npx electron-rebuild -f -w sqlite3
+
+      - name: Build Windows installer (electron-builder)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_ENV: production
+        run: npm run build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-windows
+          path: |
+            dist/**/*.exe
+            dist/**/*.zip
+            dist/**/*.7z
+          if-no-files-found: warn
+
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            dist/**/*.exe
+            dist/**/*.zip
+            dist/**/*.7z
+
+

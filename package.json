@@ -1,6 +1,6 @@
 {
   "name": "crm",
-  "version": "1.0.51",
+  "version": "1.0.59",
   "description": "客户资料管理系统",
   "main": "electron/main.js",
   "scripts": {
@@ -118,13 +118,15 @@
         {
           "target": "dmg",
           "arch": [
-            "x64"
+            "x64",
+            "arm64"
           ]
         },
         {
           "target": "zip",
           "arch": [
-            "x64"
+            "x64",
+            "arm64"
           ]
         }
       ],

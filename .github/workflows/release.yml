@@ -29,14 +29,12 @@ jobs:
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
-          npm install --omit=dev --omit=optional
-          npm install --no-optional --no-save electron@22.3.27 electron-builder@24.13.3 electron-rebuild@3.2.9
+          npm ci
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
           npm ci
-          npm install --no-save electron-builder@24.13.3 electron-rebuild@3.2.9
 
       - name: Rebuild native modules (sqlite3)
         run: npx electron-rebuild -f -w sqlite3
@@ -48,9 +46,9 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: |
           if [ "${{ runner.os }}" = "Windows" ]; then
-            npx electron-builder --win nsis
+            npx electron-builder --win nsis --publish=never
           else
-            npx electron-builder --mac dmg
+            npx electron-builder --mac dmg --publish=never
           fi
         shell: bash
 

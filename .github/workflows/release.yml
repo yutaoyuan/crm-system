@@ -48,7 +48,7 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
           echo "Building version $VERSION"
           if [ "${{ runner.os }}" = "Windows" ]; then
-            npx electron-builder --win nsis --publish=never --config.extraMetadata.version=$VERSION
+            npx electron-builder --win nsis,zip --publish=never --config.extraMetadata.version=$VERSION
           else
             # Build both x64 and arm64 DMG on macOS runner
             npx electron-builder --mac dmg --x64 --publish=never --config.extraMetadata.version=$VERSION

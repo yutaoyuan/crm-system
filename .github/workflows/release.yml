@@ -22,11 +22,11 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies (ignore optional dependencies)
-        run: |
-          npm config set optional false
-          npm config set include optional=false
-          npm install --no-optional
+      - name: Install app production dependencies (omit dev + optional)
+        run: npm ci --omit=dev --omit=optional
+
+      - name: Install build toolchain (dev tools, no optional)
+        run: npm install --no-optional --no-save electron@22.3.27 electron-builder@24.13.3 electron-rebuild@3.2.9
 
       - name: Rebuild native modules (sqlite3)
         run: npx electron-rebuild -f -w sqlite3

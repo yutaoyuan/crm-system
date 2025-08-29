@@ -334,23 +334,27 @@ router.post('/', isAuthenticated, (req, res) => {
     const parsedAmount = parseFloat(amount) || 0;
     const parsedQuantity = parseInt(quantity) || 0;
     
-    console.log(`开始更新客户ID: ${customerId} 的消费信息，金额: ${parsedAmount}，数量: ${parsedQuantity}`);
+    console.log(`开始更新客户ID: ${customerId} 的消费信息，金额: ${parsedAmount}，数量: ${parsedQuantity}，日期: ${date}`);
     
+    // 修改SQL逻辑：只有当新日期比当前last_consumption更晚时才更新最近消费日期
     db.run(`
       UPDATE customers SET
         total_consumption = total_consumption + ?,
         consumption_count = consumption_count + ?,
         consumption_times = consumption_times + 1,
-        last_consumption = ?
+        last_consumption = CASE 
+          WHEN last_consumption IS NULL OR last_consumption = '' OR ? > last_consumption THEN ?
+          ELSE last_consumption
+        END
       WHERE id = ?
-    `, [parsedAmount, parsedQuantity, date, customerId], function(err) {
+    `, [parsedAmount, parsedQuantity, date, date, customerId], function(err) {
       if (err) {
         console.error(`更新客户消费信息失败:`, err);
       } else {
         console.log(`成功更新客户ID: ${customerId} 的消费信息`);
         
         // 验证更新是否生效
-        db.get('SELECT total_consumption, consumption_count, consumption_times FROM customers WHERE id = ?', [customerId], (err, result) => {
+        db.get('SELECT total_consumption, consumption_count, consumption_times, last_consumption FROM customers WHERE id = ?', [customerId], (err, result) => {
           if (err) {
             console.error('获取更新后的客户信息失败:', err);
           } else {
@@ -593,6 +597,36 @@ router.delete('/:id', isAuthenticated, (req, res) => {
               db.run('ROLLBACK');
               return res.status(500).json({ message: '删除销售记录失败', error: err.message });
             }
+
+            // 只删除销售记录自动生成的积分，不影响手动操作的积分记录（如兑换、调整等）
+            const deletePointsSql = "DELETE FROM points WHERE channel = 'earned' AND notes = ?";
+            const pointsNotes = `销售记录 #${id} 自动生成的积分`;
+            db.run(deletePointsSql, [pointsNotes], function(err) {
+              if (err) {
+                db.run('ROLLBACK');
+                return res.status(500).json({ message: '删除关联积分记录失败', error: err.message });
+              }
+              
+              // 获取删除的积分记录数量
+              const deletedPointsCount = this.changes;
+              console.log(`删除了 ${deletedPointsCount} 条销售自动生成的积分记录`);
+              
+              // 如果销售记录有修改过，也需要删除修改时增加的积分
+              if (deletedPointsCount > 0) {
+                const deleteModifiedPointsSql = "DELETE FROM points WHERE channel = 'earned' AND notes = ?";
+                const modifiedPointsNotes = `销售记录 #${id} 修改后增加的积分`;
+                db.run(deleteModifiedPointsSql, [modifiedPointsNotes], function(err) {
+                  if (err) {
+                    console.error('删除修改后增加的积分记录失败:', err);
+                    // 不中断流程，继续执行
+                  } else {
+                    const modifiedDeletedCount = this.changes;
+                    if (modifiedDeletedCount > 0) {
+                      console.log(`删除了 ${modifiedDeletedCount} 条修改后增加的积分记录`);
+                    }
+                  }
+                });
+              }
         
             // 更新客户消费统计
             const updateSql = `
@@ -619,12 +653,47 @@ router.delete('/:id', isAuthenticated, (req, res) => {
                 recalculateCustomerPoints(sale.customer_id)
                   .then(result => {
                     console.log(`删除销售记录后，客户积分已重新计算: 累计积分=${result.totalPoints}, 可用积分=${result.availablePoints}`);
+                    // 如果可用积分为负数，进行一次正向调整将其置为0
+                    if (typeof result.availablePoints === 'number' && result.availablePoints < 0) {
+                      const needAdjust = Math.abs(result.availablePoints);
+                      console.warn(`检测到客户ID ${sale.customer_id} 可用积分为负 (${result.availablePoints})，自动调整 +${needAdjust} 至 0`);
+                      // 获取客户姓名与电话以完善积分记录
+                      db.get('SELECT name, phone FROM customers WHERE id = ?', [sale.customer_id], (e2, cust) => {
+                        const name = cust?.name || '';
+                        const phone = cust?.phone || '';
+                        const today = new Date().toISOString().split('T')[0];
+                        const insertAdjustSql = `
+                          INSERT INTO points (customer_id, name, phone, date, channel, points, operator, notes)
+                          VALUES (?, ?, ?, ?, 'adjusted', ?, '系统', ?)
+                        `;
+                        const adjustNotes = `删除销售记录 #${id} 导致积分为负，系统自动调零`;
+                        db.run(insertAdjustSql, [sale.customer_id, name, phone, today, needAdjust, adjustNotes], function(e3) {
+                          if (e3) {
+                            console.error('插入调整积分记录失败:', e3);
+                            // 即使失败也返回基本成功，避免阻塞
+                            return res.json({ message: '销售记录删除成功（警告：自动调零失败）' });
+                          }
+                          // 调整后再重新计算一次，确保客户表数值与积分明细一致
+                          recalculateCustomerPoints(sale.customer_id)
+                            .then(() => {
+                              res.json({ message: '销售记录删除成功（已自动将可用积分调至0）' });
+                            })
+                            .catch(e4 => {
+                              console.error('调整后重新计算客户积分失败:', e4);
+                              res.json({ message: '销售记录删除成功（警告：调整后重算失败）' });
+                            });
+                        });
+                      });
+                    } else {
+                      res.json({ message: '销售记录删除成功' });
+                    }
                   })
                   .catch(err => {
                     console.error('删除销售记录后重新计算客户积分失败:', err);
+                    res.json({ message: '销售记录删除成功（警告：积分重算失败）' });
                   });
-                res.json({ message: '销售记录删除成功' });
               });
+            });
             });
           });
         });
@@ -1080,7 +1149,10 @@ async function processBatch(batch, task) {
             total_consumption = total_consumption + ?,
             consumption_count = consumption_count + ?,
             consumption_times = consumption_times + 1,
-            last_consumption = ?
+            last_consumption = CASE 
+              WHEN last_consumption IS NULL OR last_consumption = '' OR ? > last_consumption THEN ?
+              ELSE last_consumption
+            END
           WHERE id = ?
         `);
         
@@ -1089,6 +1161,7 @@ async function processBatch(batch, task) {
           updateCustomerStmt.run(
             update.amount,
             update.quantity,
+            update.date,
             update.date,
             update.customerId
           );

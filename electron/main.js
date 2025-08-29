@@ -31,10 +31,19 @@ function ensureDirectoriesExist() {
 // 在应用启动时立即创建目录
 ensureDirectoriesExist();
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // 设置 session 存储路径
   const sessionPath = path.join(process.resourcesPath, 'databaseFolder', 'sessions');
   session.defaultSession.setPreloads([path.join(__dirname, 'preload.js')]);
+
+  // 在开发环境中彻底清除所有缓存和存储数据
+  if (process.env.ELECTRON_DEV) {
+    await session.defaultSession.clearCache();
+    await session.defaultSession.clearStorageData({
+      storages: ['appcache', 'cookies', 'filesystem', 'indexdb', 'localstorage', 'shadercache', 'websql', 'serviceworkers', 'cachestorage']
+    });
+    console.log('已清除开发环境所有缓存和存储数据');
+  }
 
   const { app: serverApp, PORT } = require('../app');
 
@@ -50,7 +59,9 @@ app.whenReady().then(() => {
       nodeIntegration: true,
       contextIsolation: false,
       // 使用持久化的 session
-      session: persistentSession
+      session: persistentSession,
+      // 在开发环境中禁用缓存
+      cache: !process.env.ELECTRON_DEV
     }
   });
 

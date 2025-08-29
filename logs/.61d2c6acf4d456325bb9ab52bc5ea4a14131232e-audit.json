@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 90
+    },
+    "auditLog": "D:\\MyCode\\crm - 0826\\logs\\.61d2c6acf4d456325bb9ab52bc5ea4a14131232e-audit.json",
+    "files": [
+        {
+            "date": 1756464545018,
+            "name": "D:\\MyCode\\crm - 0826\\logs\\audit-2025-08-29.log",
+            "hash": "7d0963dbcff614c68be75455b68aa12db5347acc61ac1a5b364f4fb866045545"
+        }
+    ],
+    "hashType": "sha256"
+}

@@ -6,13 +6,15 @@
   <title>客户资料管理系统 - 登录</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="js/components/confirm.js"></script>
+  <!-- 优化组件加载器 -->
+  <script src="js/components/loader.js"></script>
 </head>
 <body>
   <div class="login-container">
     <div class="login-form">
       <h1>客户资料管理系统</h1>
       <div id="error-message" class="error-message"></div>
-      <form id="login-form" method="post" onsubmit="return false;">
+      <form id="login-form" method="post">
         <div class="form-group">
           <label for="username">用户名</label>
           <input type="text" id="username" name="username" placeholder="请输入用户名" autocomplete="username">

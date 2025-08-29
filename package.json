@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "electron": "NODE_ENV=development ELECTRON_DEV=1 electron .",
-    "build": "NODE_ENV=production electron-builder",
+    "electron": "cross-env NODE_ENV=development ELECTRON_DEV=1 electron .",
+    "build": "cross-env NODE_ENV=production electron-builder",
     "pack": "electron-builder --dir",
     "postinstall": "electron-builder install-app-deps",
     "backup-db": "node scripts/backup-db.js",
@@ -49,7 +49,8 @@
     "electron": "^32.0.0",
     "electron-builder": "^25.0.0",
     "electron-rebuild": "^3.2.9",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "cross-env": "^7.0.3"
   },
   "optionalDependencies": {
     "dmg-license": "^1.0.11"
